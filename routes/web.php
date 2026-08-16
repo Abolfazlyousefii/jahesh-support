@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +19,17 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/logout', LogoutController::class)->name('logout');
     Route::get('/dashboard', DashboardController::class)->middleware('can:dashboard.view')->name('dashboard');
+
+    Route::prefix('tasks')->name('tasks.')->group(function () {
+        Route::get('/', [TaskController::class, 'index'])->middleware('can:tasks.view')->name('index');
+        Route::get('/create', [TaskController::class, 'create'])->middleware('can:tasks.create')->name('create');
+        Route::post('/', [TaskController::class, 'store'])->middleware('can:tasks.create')->name('store');
+        Route::patch('/{task}/status', [TaskController::class, 'updateStatus'])->middleware('can:tasks.update_status')->name('status.update');
+        Route::get('/{task}', [TaskController::class, 'show'])->middleware('can:tasks.view')->name('show');
+        Route::get('/{task}/edit', [TaskController::class, 'edit'])->middleware('can:tasks.update')->name('edit');
+        Route::put('/{task}', [TaskController::class, 'update'])->middleware('can:tasks.update')->name('update');
+        Route::delete('/{task}', [TaskController::class, 'destroy'])->middleware('can:tasks.delete')->name('destroy');
+    });
 
     Route::prefix('customers')->name('customers.')->group(function () {
         Route::get('/', [CustomerController::class, 'index'])->middleware('can:customers.view')->name('index');

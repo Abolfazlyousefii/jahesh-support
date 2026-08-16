@@ -28,6 +28,13 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'customers.create', 'title' => 'ایجاد مشتری', 'group' => 'مشتریان'],
             ['name' => 'customers.update', 'title' => 'ویرایش مشتری', 'group' => 'مشتریان'],
             ['name' => 'customers.delete', 'title' => 'حذف مشتری', 'group' => 'مشتریان'],
+            ['name' => 'tasks.view', 'title' => 'مشاهده تسک‌ها', 'group' => 'تسک‌ها'],
+            ['name' => 'tasks.create', 'title' => 'ایجاد تسک', 'group' => 'تسک‌ها'],
+            ['name' => 'tasks.update', 'title' => 'ویرایش تسک', 'group' => 'تسک‌ها'],
+            ['name' => 'tasks.delete', 'title' => 'حذف تسک', 'group' => 'تسک‌ها'],
+            ['name' => 'tasks.assign', 'title' => 'ارجاع تسک به دیگران', 'group' => 'تسک‌ها'],
+            ['name' => 'tasks.view_all', 'title' => 'مشاهده همه تسک‌ها', 'group' => 'تسک‌ها'],
+            ['name' => 'tasks.update_status', 'title' => 'تغییر وضعیت تسک', 'group' => 'تسک‌ها'],
         ];
 
         foreach ($permissions as $permission) {
@@ -54,8 +61,21 @@ class RolesAndPermissionsSeeder extends Seeder
                     'customers.create',
                     'customers.update',
                     'customers.delete',
+                    'tasks.view',
+                    'tasks.create',
+                    'tasks.update',
+                    'tasks.delete',
+                    'tasks.assign',
+                    'tasks.view_all',
+                    'tasks.update_status',
                 ],
-                default => ['dashboard.view'],
+                default => [
+                    'dashboard.view',
+                    'tasks.view',
+                    'tasks.create',
+                    'tasks.update',
+                    'tasks.update_status',
+                ],
             });
         }
 
