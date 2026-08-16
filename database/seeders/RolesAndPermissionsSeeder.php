@@ -24,6 +24,10 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'roles.create', 'title' => 'ایجاد نقش', 'group' => 'نقش‌ها و دسترسی‌ها'],
             ['name' => 'roles.update', 'title' => 'ویرایش نقش و دسترسی‌ها', 'group' => 'نقش‌ها و دسترسی‌ها'],
             ['name' => 'roles.delete', 'title' => 'حذف نقش', 'group' => 'نقش‌ها و دسترسی‌ها'],
+            ['name' => 'customers.view', 'title' => 'مشاهده مشتریان', 'group' => 'مشتریان'],
+            ['name' => 'customers.create', 'title' => 'ایجاد مشتری', 'group' => 'مشتریان'],
+            ['name' => 'customers.update', 'title' => 'ویرایش مشتری', 'group' => 'مشتریان'],
+            ['name' => 'customers.delete', 'title' => 'حذف مشتری', 'group' => 'مشتریان'],
         ];
 
         foreach ($permissions as $permission) {
@@ -42,7 +46,17 @@ class RolesAndPermissionsSeeder extends Seeder
                 ['name' => $roleData['name'], 'guard_name' => 'web'],
                 ['title' => $roleData['title'], 'is_system' => $roleData['is_system']],
             );
-            $role->syncPermissions($role->name === 'super-admin' ? Permission::all() : ['dashboard.view']);
+            $role->syncPermissions(match ($role->name) {
+                'super-admin' => Permission::all(),
+                'project-manager' => [
+                    'dashboard.view',
+                    'customers.view',
+                    'customers.create',
+                    'customers.update',
+                    'customers.delete',
+                ],
+                default => ['dashboard.view'],
+            });
         }
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();

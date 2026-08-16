@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TeamController;
@@ -17,6 +18,16 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/logout', LogoutController::class)->name('logout');
     Route::get('/dashboard', DashboardController::class)->middleware('can:dashboard.view')->name('dashboard');
+
+    Route::prefix('customers')->name('customers.')->group(function () {
+        Route::get('/', [CustomerController::class, 'index'])->middleware('can:customers.view')->name('index');
+        Route::get('/create', [CustomerController::class, 'create'])->middleware('can:customers.create')->name('create');
+        Route::post('/', [CustomerController::class, 'store'])->middleware('can:customers.create')->name('store');
+        Route::get('/{customer}', [CustomerController::class, 'show'])->middleware('can:customers.view')->name('show');
+        Route::get('/{customer}/edit', [CustomerController::class, 'edit'])->middleware('can:customers.update')->name('edit');
+        Route::put('/{customer}', [CustomerController::class, 'update'])->middleware('can:customers.update')->name('update');
+        Route::delete('/{customer}', [CustomerController::class, 'destroy'])->middleware('can:customers.delete')->name('destroy');
+    });
 
     Route::prefix('team')->name('team.')->group(function () {
         Route::get('/', [TeamController::class, 'index'])->middleware('can:team.view')->name('index');
