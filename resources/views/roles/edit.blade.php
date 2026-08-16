@@ -1,0 +1,1 @@
+<x-layouts.app title="ویرایش نقش"><x-page-header title="ویرایش نقش" description="دسترسی‌ها بر اساس بخش‌های پنل گروه‌بندی شده‌اند." /><form method="POST" action="{{ route('roles.update', $role) }}" class="panel max-w-4xl p-5 sm:p-6">@csrf @method('PUT') @include('roles.form')</form></x-layouts.app>

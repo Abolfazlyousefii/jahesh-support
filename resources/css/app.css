@@ -6,6 +6,37 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Vazirmatn', Tahoma, Arial, sans-serif;
+    --color-brand: #27e3a5;
+}
+
+:root {
+    --background: #f5f6f7;
+    --surface: #ffffff;
+    --text: #151817;
+    --text-muted: #69706d;
+    --border: #e4e7e6;
+    --brand: #27e3a5;
+}
+
+@layer base {
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--background); color: var(--text); font-family: var(--font-sans); font-size: 14px; }
+    button, input, select { font: inherit; }
+    [x-cloak] { display: none !important; }
+}
+
+@layer components {
+    .form-label { display: block; margin-bottom: .45rem; color: #37403d; font-size: 13px; font-weight: 600; }
+    .form-control { width: 100%; min-height: 44px; border: 1px solid var(--border); border-radius: .55rem; background: white; padding: .65rem .8rem; color: var(--text); outline: none; transition: border-color .15s, box-shadow .15s; }
+    .form-control:focus { border-color: #1fc992; box-shadow: 0 0 0 3px rgb(39 227 165 / 16%); }
+    .form-error { margin-top: .35rem; color: #b42318; font-size: 12px; }
+    .btn { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: .45rem; border-radius: .5rem; padding: .55rem 1rem; font-weight: 700; transition: background-color .15s; cursor: pointer; }
+    .btn-primary { background: var(--brand); color: #0b2d22; }
+    .btn-primary:hover { background: #20ce96; }
+    .btn-secondary { border: 1px solid var(--border); background: white; color: #343b39; }
+    .btn-danger { border: 1px solid #fecaca; background: #fff; color: #b42318; }
+    .panel { border: 1px solid var(--border); border-radius: .75rem; background: var(--surface); }
+    .nav-link { display: flex; min-height: 44px; align-items: center; gap: .7rem; border-radius: .5rem; padding: .65rem .75rem; color: #4c5552; }
+    .nav-link:hover, .nav-link.active { background: #ebfdf6; color: #116b4f; }
 }

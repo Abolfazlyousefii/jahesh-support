@@ -1,0 +1,1 @@
+<x-layouts.app title="ایجاد نقش"><x-page-header title="ایجاد نقش" description="عنوان نقش و دسترسی‌های مورد نیاز را انتخاب کنید." /><form method="POST" action="{{ route('roles.store') }}" class="panel max-w-4xl p-5 sm:p-6">@csrf @include('roles.form', ['role' => null])</form></x-layouts.app>
