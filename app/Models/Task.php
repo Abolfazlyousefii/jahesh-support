@@ -15,7 +15,7 @@ class Task extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'title', 'description', 'customer_id', 'assignee_id', 'created_by',
+        'title', 'description', 'customer_id', 'source_ticket_id', 'assignee_id', 'created_by',
         'priority', 'status', 'start_date', 'due_date', 'completed_at',
     ];
 
@@ -43,6 +43,11 @@ class Task extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by')->withTrashed();
+    }
+
+    public function sourceTicket(): BelongsTo
+    {
+        return $this->belongsTo(Ticket::class, 'source_ticket_id')->withTrashed();
     }
 
     public function scopeAssignedTo(Builder $query, User|int $user): Builder

@@ -34,6 +34,13 @@
             @endforelse
         </section>
     @endcan
+    @can('tickets.view')
+        <section class="mt-5">
+            <div class="mb-3 flex items-center justify-between"><h2 class="text-base font-bold">وضعیت تیکت‌ها</h2><a href="{{ route('tickets.index') }}" class="text-sm font-semibold text-emerald-700">مشاهده تیکت‌ها</a></div>
+            <div class="grid gap-3 sm:grid-cols-3"><div class="panel p-4"><span class="text-xs text-gray-500">تیکت جدید</span><strong class="mt-2 block text-xl">{{ $ticketMetrics['new'] }}</strong></div><div class="panel p-4"><span class="text-xs text-gray-500">تیکت باز</span><strong class="mt-2 block text-xl">{{ $ticketMetrics['open'] }}</strong></div><div class="panel p-4"><span class="text-xs text-gray-500">منتظر مشتری</span><strong class="mt-2 block text-xl">{{ $ticketMetrics['waiting'] }}</strong></div></div>
+        </section>
+        <section class="panel mt-5 overflow-hidden"><div class="border-b border-gray-100 px-5 py-4"><h2 class="text-base font-bold">تیکت‌های نیازمند توجه</h2></div>@forelse($attentionTickets as $ticket)<a href="{{ route('tickets.show', $ticket) }}" class="flex min-h-14 items-center justify-between gap-3 border-b border-gray-100 px-5 py-3 last:border-0 hover:bg-gray-50"><span><strong>{{ $ticket->subject }}</strong><small class="mr-2 text-gray-400">{{ $ticket->customer->name }}</small></span><div class="flex gap-2"><x-badge :type="$ticket->priority->intent()">{{ $ticket->priority->label() }}</x-badge><x-badge :type="$ticket->status->intent()">{{ $ticket->status->label() }}</x-badge></div></a>@empty<div class="px-5 py-7 text-center text-sm text-gray-500">تیکت نیازمند توجهی وجود ندارد.</div>@endforelse</section>
+    @endcan
     <div class="panel mt-5 p-5">
         <h2 class="mb-3 text-base font-bold">دسترسی سریع</h2>
         <div class="flex flex-wrap gap-2">

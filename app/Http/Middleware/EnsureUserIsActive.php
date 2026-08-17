@@ -11,9 +11,9 @@ class EnsureUserIsActive
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user() && ! $request->user()->is_active) {
-            Auth::logout();
-            $request->session()->invalidate();
+        if ($request->user('web') && ! $request->user('web')->is_active) {
+            Auth::guard('web')->logout();
+            $request->session()->migrate(true);
             $request->session()->regenerateToken();
 
             return redirect()->route('login')->withErrors(['phone' => 'حساب کاربری شما غیرفعال شده است.']);

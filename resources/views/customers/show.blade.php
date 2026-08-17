@@ -28,6 +28,10 @@
         </section>
     </div>
 
+    @can('tickets.view')
+        <section class="panel mt-4 overflow-hidden"><div class="flex items-center justify-between border-b border-gray-100 px-5 py-4"><h2 class="font-bold">تیکت‌های اخیر</h2><a href="{{ route('tickets.index', ['customer_id' => $customer->id]) }}" class="text-sm font-semibold text-emerald-700">مشاهده همه تیکت‌ها</a></div>@forelse($recentTickets as $ticket)<a href="{{ route('tickets.show', $ticket) }}" class="flex min-h-14 items-center justify-between gap-3 border-b border-gray-100 px-5 py-3 last:border-0"><span><strong>{{ $ticket->subject }}</strong><small class="mr-2 text-gray-400">#{{ $ticket->id }}</small></span><x-badge :type="$ticket->status->intent()">{{ $ticket->status->label() }}</x-badge></a>@empty<div class="px-5 py-7 text-center text-sm text-gray-500">تیکتی برای این مشتری وجود ندارد.</div>@endforelse</section>
+    @endcan
+
     @can('customers.delete')
         <div class="mt-6 border-t border-gray-200 pt-5">
             <form method="POST" action="{{ route('customers.destroy', $customer) }}" onsubmit="return confirm('این مشتری حذف شود؟ این عملیات به‌صورت حذف نرم انجام می‌شود.')">

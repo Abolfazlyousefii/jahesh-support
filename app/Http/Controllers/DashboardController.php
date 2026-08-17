@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enums\TaskStatus;
+use App\Enums\TicketPriority;
+use App\Enums\TicketStatus;
 use App\Models\Customer;
 use App\Models\Role;
 use App\Models\Task;
+use App\Models\Ticket;
 use App\Models\User;
 use App\Support\DatePresenter;
 use Illuminate\View\View;
@@ -18,6 +21,7 @@ class DashboardController extends Controller
         $canViewCustomers = $user->can('customers.view');
         $canViewTasks = $user->can('tasks.view');
         $canViewAllTasks = $user->can('tasks.view_all');
+        $canViewTickets = $user->can('tickets.view');
 
         return view('dashboard', [
             'activeUsers' => User::query()->where('is_active', true)->count(),
@@ -33,6 +37,18 @@ class DashboardController extends Controller
             ] : null,
             'todayTasks' => $canViewTasks
                 ? Task::query()->with('customer')->assignedTo($user)->whereDate('due_date', today())->latest()->limit(5)->get()
+                : collect(),
+            'ticketMetrics' => $canViewTickets ? [
+                'new' => Ticket::query()->visibleTo($user)->where('status', TicketStatus::New)->count(),
+                'open' => Ticket::query()->visibleTo($user)->open()->count(),
+                'waiting' => Ticket::query()->visibleTo($user)->where('status', TicketStatus::WaitingCustomer)->count(),
+            ] : null,
+            'attentionTickets' => $canViewTickets
+                ? Ticket::query()->with('customer')->visibleTo($user)->open()
+                    ->orderByRaw('priority = ? DESC', [TicketPriority::Urgent->value])
+                    ->orderByRaw('status = ? DESC', [TicketStatus::New->value])
+                    ->orderByRaw('status = ? DESC', [TicketStatus::InReview->value])
+                    ->latest()->limit(5)->get()
                 : collect(),
         ]);
     }

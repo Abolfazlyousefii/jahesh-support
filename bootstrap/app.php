@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnsureCustomerAuthenticated;
+use App\Http\Middleware\EnsureCustomerIsActive;
+use App\Http\Middleware\EnsureCustomerIsGuest;
 use App\Http\Middleware\EnsureUserIsActive;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -14,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'active' => EnsureUserIsActive::class,
+            'customer.auth' => EnsureCustomerAuthenticated::class,
+            'customer.guest' => EnsureCustomerIsGuest::class,
+            'customer.active' => EnsureCustomerIsActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -1,0 +1,27 @@
+<x-layouts.app :title="$ticket->subject">
+    <x-page-header :title="$ticket->subject" :description="'#'.$ticket->id.' — '.$ticket->customer->name">
+        <x-slot:actions>@if($ticket->task)@if($ticket->task->trashed())<x-badge type="neutral">تسک مرتبط حذف شده</x-badge>@else<a href="{{ route('tasks.show', $ticket->task) }}" class="btn btn-secondary">مشاهده تسک مرتبط</a>@endif @else @can('convertToTask', $ticket)<a href="{{ route('tickets.convert', $ticket) }}" class="btn btn-primary">تبدیل به تسک</a>@endcan @endif</x-slot:actions>
+    </x-page-header>
+    <div class="mb-4 flex flex-wrap gap-2"><x-badge :type="$ticket->status->intent()">{{ $ticket->status->label() }}</x-badge><x-badge :type="$ticket->priority->intent()">اولویت {{ $ticket->priority->label() }}</x-badge></div>
+
+    <div class="grid gap-4 lg:grid-cols-3">
+        <section class="panel overflow-hidden lg:col-span-2">
+            <div class="border-b border-gray-100 px-5 py-4"><h2 class="font-bold">گفتگو</h2></div>
+            <div class="space-y-4 p-4 sm:p-5">@foreach($ticket->messages as $message)@php($internal = $message->message_type === \App\Enums\TicketMessageType::Internal)<article class="rounded-lg border p-3 {{ $internal ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-gray-50' }}"><div class="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500"><span>{{ $message->author instanceof \App\Models\Customer ? $ticket->customer->name : $message->author?->name }} @if($internal)<strong class="mr-2 text-amber-700">یادداشت داخلی</strong>@endif</span><time>{{ app(\App\Support\DatePresenter::class)->dateTime($message->created_at) }}</time></div><p class="whitespace-pre-line leading-7">{{ $message->body }}</p></article>@endforeach</div>
+            @if(!$ticket->status->isClosed())
+                <div class="border-t border-gray-100 p-4" x-data="{ mode: 'public' }">
+                    <div class="mb-3 flex gap-2">@can('reply', $ticket)<button type="button" class="btn" :class="mode === 'public' ? 'btn-primary' : 'btn-secondary'" @click="mode='public'">پاسخ به مشتری</button>@endcan @can('internalNote', $ticket)<button type="button" class="btn" :class="mode === 'internal' ? 'btn-primary' : 'btn-secondary'" @click="mode='internal'">یادداشت داخلی</button>@endcan</div>
+                    @can('reply', $ticket)<form x-show="mode === 'public'" method="POST" action="{{ route('tickets.reply', $ticket) }}">@csrf<label class="form-label" for="public-body">پاسخ برای مشتری</label><textarea id="public-body" name="body" rows="4" class="form-control" required></textarea>@error('body')<p class="form-error">{{ $message }}</p>@enderror<div class="mt-3 flex justify-end"><x-button>ارسال پاسخ</x-button></div></form>@endcan
+                    @can('internalNote', $ticket)<form x-cloak x-show="mode === 'internal'" method="POST" action="{{ route('tickets.internal-note', $ticket) }}" class="rounded-lg border border-amber-200 bg-amber-50 p-3">@csrf<p class="mb-2 text-sm font-bold text-amber-800">یادداشت داخلی — مشتری این پیام را نمی‌بیند</p><textarea name="body" rows="4" class="form-control" required></textarea>@error('body')<p class="form-error">{{ $message }}</p>@enderror<div class="mt-3 flex justify-end"><x-button>ثبت یادداشت</x-button></div></form>@endcan
+                </div>
+            @else<div class="border-t border-gray-100 bg-gray-50 p-5 text-center text-sm text-gray-500">این تیکت بسته و فقط خواندنی است.</div>@endif
+        </section>
+
+        <aside class="space-y-4">
+            <section class="panel p-5"><h2 class="mb-4 font-bold">جزئیات</h2><dl class="space-y-4"><div><dt class="text-xs text-gray-500">مشتری</dt><dd class="mt-1">{{ $ticket->customer->name }}</dd></div><div><dt class="text-xs text-gray-500">شماره اصلی</dt><dd class="mt-1" dir="ltr">{{ $ticket->customer->primaryPhone?->phone }}</dd></div><div><dt class="text-xs text-gray-500">مسئول</dt><dd class="mt-1">{{ $ticket->assignee?->name ?: 'تخصیص‌نیافته' }}</dd></div><div><dt class="text-xs text-gray-500">تاریخ ثبت</dt><dd class="mt-1">{{ app(\App\Support\DatePresenter::class)->dateTime($ticket->created_at) }}</dd></div></dl></section>
+            @can('assign', $ticket)<form method="POST" action="{{ route('tickets.assignment.update', $ticket) }}" class="panel p-4">@csrf @method('PATCH')<label for="assignee_id" class="form-label">تغییر مسئول</label><select id="assignee_id" name="assignee_id" class="form-control">@foreach($assignees as $assignee)<option value="{{ $assignee->id }}" @selected($ticket->assigned_to === $assignee->id)>{{ $assignee->name }}</option>@endforeach</select><x-button class="mt-3 w-full">ثبت مسئول</x-button></form>@endcan
+            @can('updateStatus', $ticket)<form method="POST" action="{{ route('tickets.status.update', $ticket) }}" class="panel p-4">@csrf @method('PATCH')<label for="ticket-status" class="form-label">تغییر وضعیت</label><select id="ticket-status" name="status" class="form-control">@foreach($statuses as $status)<option value="{{ $status->value }}" @selected($ticket->status === $status)>{{ $status->label() }}</option>@endforeach</select><x-button class="mt-3 w-full">ثبت وضعیت</x-button></form>@endcan
+        </aside>
+    </div>
+    @can('delete', $ticket)<div class="mt-6 border-t border-gray-200 pt-5"><form method="POST" action="{{ route('tickets.destroy', $ticket) }}" onsubmit="return confirm('این تیکت حذف شود؟')">@csrf @method('DELETE')<x-button variant="danger">حذف تیکت</x-button></form></div>@endcan
+</x-layouts.app>

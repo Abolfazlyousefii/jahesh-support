@@ -7,6 +7,7 @@ use App\Actions\Customers\UpdateCustomerAction;
 use App\Http\Requests\Customer\StoreCustomerRequest;
 use App\Http\Requests\Customer\UpdateCustomerRequest;
 use App\Models\Customer;
+use App\Models\Ticket;
 use App\Support\PhoneNormalizer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -56,11 +57,14 @@ class CustomerController extends Controller
         return redirect()->route('customers.show', $customer)->with('success', 'مشتری با موفقیت ثبت شد.');
     }
 
-    public function show(Customer $customer): View
+    public function show(Request $request, Customer $customer): View
     {
         $customer->load('phones');
+        $recentTickets = $request->user()->can('tickets.view')
+            ? Ticket::query()->visibleTo($request->user())->where('customer_id', $customer->id)->latest()->limit(5)->get()
+            : collect();
 
-        return view('customers.show', compact('customer'));
+        return view('customers.show', compact('customer', 'recentTickets'));
     }
 
     public function edit(Customer $customer): View

@@ -24,8 +24,8 @@
     <nav class="fixed inset-x-0 bottom-0 z-30 flex min-h-16 items-center justify-around border-t border-gray-200 bg-white px-2 lg:hidden">
         @can('dashboard.view')<a href="{{ route('dashboard') }}" class="flex min-w-16 flex-col items-center gap-1 py-2 text-xs {{ request()->routeIs('dashboard') ? 'text-emerald-700' : 'text-gray-500' }}"><x-icon name="dashboard" />داشبورد</a>@endcan
         @can('tasks.view')<a href="{{ route('tasks.index') }}" class="flex min-w-16 flex-col items-center gap-1 py-2 text-xs {{ request()->routeIs('tasks.*') ? 'text-emerald-700' : 'text-gray-500' }}"><x-icon name="tasks" />تسک‌ها</a>@endcan
+        @can('tickets.view')<a href="{{ route('tickets.index') }}" class="flex min-w-16 flex-col items-center gap-1 py-2 text-xs {{ request()->routeIs('tickets.*') ? 'text-emerald-700' : 'text-gray-500' }}"><x-icon name="tickets" />تیکت‌ها</a>@endcan
         @can('team.view')<a href="{{ route('team.index') }}" class="flex min-w-16 flex-col items-center gap-1 py-2 text-xs {{ request()->routeIs('team.*') ? 'text-emerald-700' : 'text-gray-500' }}"><x-icon name="users" />اعضا</a>@endcan
-        @can('roles.view')<a href="{{ route('roles.index') }}" class="flex min-w-16 flex-col items-center gap-1 py-2 text-xs {{ request()->routeIs('roles.*') ? 'text-emerald-700' : 'text-gray-500' }}"><x-icon name="shield" />نقش‌ها</a>@endcan
     </nav>
 </body>
 </html>

@@ -1,0 +1,4 @@
+<x-layouts.portal title="حساب من">
+    <x-page-header title="حساب من" description="اطلاعات ثبت‌شده شما در جهش" />
+    <section class="panel p-5"><dl class="grid gap-5 sm:grid-cols-2"><div><dt class="text-xs text-gray-500">نام</dt><dd class="mt-1 font-semibold">{{ $customer->name }}</dd></div><div><dt class="text-xs text-gray-500">نام مجموعه</dt><dd class="mt-1">{{ $customer->company_name ?: '—' }}</dd></div><div><dt class="text-xs text-gray-500">شهر</dt><dd class="mt-1">{{ $customer->city ?: '—' }}</dd></div><div class="sm:col-span-2"><dt class="text-xs text-gray-500">آدرس</dt><dd class="mt-1">{{ $customer->address ?: '—' }}</dd></div><div class="sm:col-span-2"><dt class="text-xs text-gray-500">شماره‌های ثبت‌شده</dt><dd class="mt-2 flex flex-wrap gap-2">@foreach($customer->phones as $phone)<span class="rounded-lg border border-gray-200 px-3 py-2" dir="ltr">{{ $phone->phone }}</span>@endforeach</dd></div></dl></section>
+</x-layouts.portal>

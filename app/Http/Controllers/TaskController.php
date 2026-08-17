@@ -94,7 +94,7 @@ class TaskController extends Controller
     public function show(Request $request, Task $task): View
     {
         Gate::authorize('view', $task);
-        $task->load(['customer', 'assignee.roles', 'creator']);
+        $task->load(['customer', 'assignee.roles', 'creator', 'sourceTicket']);
 
         return view('tasks.show', ['task' => $task, 'statuses' => TaskStatus::cases()]);
     }

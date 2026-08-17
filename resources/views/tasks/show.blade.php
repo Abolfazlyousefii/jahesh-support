@@ -7,6 +7,7 @@
         <x-badge :type="$task->status->intent()">{{ $task->status->label() }}</x-badge>
         <x-badge :type="$task->priority->intent()">اولویت {{ $task->priority->label() }}</x-badge>
         @if($task->isOverdue())<x-badge type="danger">عقب‌افتاده</x-badge>@endif
+        @if($task->sourceTicket)@if($task->sourceTicket->trashed())<span class="text-sm text-gray-500">منبع: تیکت حذف‌شده #{{ $task->sourceTicket->id }}</span>@else<a href="{{ route('tickets.show', $task->sourceTicket) }}" class="text-sm font-semibold text-emerald-700">منبع: تیکت #{{ $task->sourceTicket->id }}</a>@endif @endif
     </div>
 
     <div class="grid gap-4 lg:grid-cols-3">
