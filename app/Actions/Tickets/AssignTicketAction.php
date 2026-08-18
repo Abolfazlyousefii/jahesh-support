@@ -11,9 +11,8 @@ class AssignTicketAction
 
     public function execute(Ticket $ticket, int $assigneeId): Ticket
     {
-        $this->workflow->ensureWritable($ticket);
-        $ticket->update(['assigned_to' => $assigneeId]);
+        $this->workflow->assign($ticket, $assigneeId);
 
-        return $ticket;
+        return $ticket->refresh();
     }
 }

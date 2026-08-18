@@ -43,6 +43,11 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'tickets.internal_notes', 'title' => 'ثبت یادداشت داخلی تیکت', 'group' => 'تیکت‌ها'],
             ['name' => 'tickets.convert_to_task', 'title' => 'تبدیل تیکت به تسک', 'group' => 'تیکت‌ها'],
             ['name' => 'tickets.delete', 'title' => 'حذف تیکت', 'group' => 'تیکت‌ها'],
+            ['name' => 'finance.view', 'title' => 'مشاهده امور مالی مشتریان', 'group' => 'مالی'],
+            ['name' => 'finance.create_entry', 'title' => 'ثبت سند بدهکار و بستانکار', 'group' => 'مالی'],
+            ['name' => 'finance.void_entry', 'title' => 'ابطال سند مالی', 'group' => 'مالی'],
+            ['name' => 'finance.review_payments', 'title' => 'بررسی و تأیید فیش‌های پرداخت', 'group' => 'مالی'],
+            ['name' => 'finance.manage_bank_accounts', 'title' => 'مدیریت حساب‌های بانکی', 'group' => 'مالی'],
         ];
 
         foreach ($permissions as $permission) {
@@ -84,6 +89,9 @@ class RolesAndPermissionsSeeder extends Seeder
                     'tickets.internal_notes',
                     'tickets.convert_to_task',
                     'tickets.delete',
+                    'finance.view',
+                    'finance.create_entry',
+                    'finance.review_payments',
                 ],
                 default => [
                     'dashboard.view',

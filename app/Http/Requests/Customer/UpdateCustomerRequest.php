@@ -40,6 +40,7 @@ class UpdateCustomerRequest extends FormRequest
             'address' => ['nullable', 'string', 'max:5000'],
             'notes' => ['nullable', 'string', 'max:10000'],
             'is_active' => ['boolean'],
+            'password' => ['nullable', 'string', 'min:8', 'max:255', 'regex:/[A-Z]/', 'regex:/[0-9]/', 'confirmed'],
             'phones' => ['required', 'array', 'min:1'],
             'phones.*.phone' => [
                 'required',

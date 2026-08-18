@@ -1,22 +1,109 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'پشتیبانی' }} | جهش</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ $title ?? 'پنل مشتری' }} | جهش</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen pb-16">
-    <header class="border-b border-gray-200 bg-white">
-        <div class="mx-auto flex h-16 max-w-4xl items-center justify-between px-4">
-            <a href="{{ route('portal.dashboard') }}" class="flex items-center gap-2"><span class="grid h-9 w-9 place-items-center rounded-lg bg-brand font-black text-emerald-950">ج</span><strong>پشتیبانی جهش</strong></a>
-            <form method="POST" action="{{ route('portal.logout') }}">@csrf<button class="btn btn-secondary" type="submit">خروج</button></form>
+@php($portalCustomer = auth('customer')->user())
+<body class="portal-body min-h-screen">
+    <div class="portal-shell">
+        <aside class="portal-sidebar" aria-label="منوی پنل مشتری">
+            <a href="{{ route('portal.dashboard') }}" class="portal-brand">
+                <span class="portal-brand-mark">ج</span>
+                <span>
+                    <strong>پشتیبانی جهش</strong>
+                    <small>پنل مشتریان</small>
+                </span>
+            </a>
+
+            <nav class="portal-nav">
+                <a href="{{ route('portal.dashboard') }}" class="portal-nav-link {{ request()->routeIs('portal.dashboard') ? 'active' : '' }}" @if(request()->routeIs('portal.dashboard')) aria-current="page" @endif>
+                    <x-icon name="dashboard" />
+                    <span>خانه</span>
+                </a>
+                <a href="{{ route('portal.tickets.index') }}" class="portal-nav-link {{ request()->routeIs('portal.tickets.*') ? 'active' : '' }}" @if(request()->routeIs('portal.tickets.*')) aria-current="page" @endif>
+                    <x-icon name="tickets" />
+                    <span>تیکت‌ها</span>
+                </a>
+                <a href="{{ route('portal.finance.index') }}" class="portal-nav-link {{ request()->routeIs('portal.finance.*') ? 'active' : '' }}" @if(request()->routeIs('portal.finance.*')) aria-current="page" @endif>
+                    <x-icon name="finance" />
+                    <span>مالی و حساب</span>
+                </a>
+                <a href="{{ route('portal.profile') }}" class="portal-nav-link {{ request()->routeIs('portal.profile') ? 'active' : '' }}" @if(request()->routeIs('portal.profile')) aria-current="page" @endif>
+                    <x-icon name="customers" />
+                    <span>حساب من</span>
+                </a>
+            </nav>
+
+            <div class="portal-sidebar-spacer"></div>
+
+            <div class="portal-help-card">
+                <span>پشتیبانی</span>
+                <strong>سؤالی دارید یا مشکلی پیش آمده؟</strong>
+                <a href="{{ route('portal.tickets.create') }}">ثبت درخواست جدید</a>
+            </div>
+        </aside>
+
+        <div class="portal-main">
+            <header class="portal-topbar">
+                <div class="portal-topbar-title">
+                    <strong>{{ $title ?? 'پنل مشتری' }}</strong>
+                    <span>مدیریت درخواست‌ها و خدمات شما</span>
+                </div>
+
+                <div class="portal-user">
+                    <div class="portal-user-avatar">{{ mb_substr($portalCustomer?->name ?? 'ج', 0, 1) }}</div>
+                    <div class="portal-user-copy">
+                        <strong>{{ $portalCustomer?->name }}</strong>
+                        <span>{{ $portalCustomer?->company_name ?: 'مشتری جهش' }}</span>
+                    </div>
+                    <form method="POST" action="{{ route('portal.logout') }}">
+                        @csrf
+                        <button class="portal-logout" type="submit" aria-label="خروج از حساب">
+                            <x-icon name="logout" />
+                            <span>خروج</span>
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <header class="portal-mobile-header">
+                <a href="{{ route('portal.dashboard') }}" class="portal-mobile-brand">
+                    <span class="portal-brand-mark">ج</span>
+                    <strong>پشتیبانی جهش</strong>
+                </a>
+                <form method="POST" action="{{ route('portal.logout') }}">
+                    @csrf
+                    <button class="portal-mobile-logout" type="submit">خروج</button>
+                </form>
+            </header>
+
+            <main class="portal-content">
+                <x-alert />
+                {{ $slot }}
+            </main>
         </div>
-    </header>
-    <main class="mx-auto max-w-4xl p-4 sm:p-6"><x-alert />{{ $slot }}</main>
-    <nav class="fixed inset-x-0 bottom-0 z-30 flex min-h-16 items-center justify-around border-t border-gray-200 bg-white px-3">
-        <a href="{{ route('portal.dashboard') }}" class="flex min-w-20 flex-col items-center gap-1 py-2 text-xs {{ request()->routeIs('portal.dashboard') ? 'text-emerald-700' : 'text-gray-500' }}"><x-icon name="dashboard" />خانه</a>
-        <a href="{{ route('portal.tickets.index') }}" class="flex min-w-20 flex-col items-center gap-1 py-2 text-xs {{ request()->routeIs('portal.tickets.*') ? 'text-emerald-700' : 'text-gray-500' }}"><x-icon name="tickets" />تیکت‌ها</a>
-        <a href="{{ route('portal.profile') }}" class="flex min-w-20 flex-col items-center gap-1 py-2 text-xs {{ request()->routeIs('portal.profile') ? 'text-emerald-700' : 'text-gray-500' }}"><x-icon name="customers" />حساب من</a>
+    </div>
+
+    <nav class="portal-mobile-nav" aria-label="منوی موبایل پنل مشتری">
+        <a href="{{ route('portal.dashboard') }}" class="{{ request()->routeIs('portal.dashboard') ? 'active' : '' }}">
+            <x-icon name="dashboard" />
+            <span>خانه</span>
+        </a>
+        <a href="{{ route('portal.tickets.index') }}" class="{{ request()->routeIs('portal.tickets.*') ? 'active' : '' }}">
+            <x-icon name="tickets" />
+            <span>تیکت‌ها</span>
+        </a>
+        <a href="{{ route('portal.finance.index') }}" class="{{ request()->routeIs('portal.finance.*') ? 'active' : '' }}">
+            <x-icon name="finance" />
+            <span>مالی</span>
+        </a>
+        <a href="{{ route('portal.profile') }}" class="{{ request()->routeIs('portal.profile') ? 'active' : '' }}">
+            <x-icon name="customers" />
+            <span>حساب من</span>
+        </a>
     </nav>
 </body>
 </html>

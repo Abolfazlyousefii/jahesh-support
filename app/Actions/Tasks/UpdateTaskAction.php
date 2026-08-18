@@ -6,10 +6,14 @@ use App\Enums\TaskStatus;
 use App\Models\Task;
 use App\Models\User;
 use App\Support\TaskStatusManager;
+use App\Support\TicketWorkflow;
 
 class UpdateTaskAction
 {
-    public function __construct(private readonly TaskStatusManager $statuses) {}
+    public function __construct(
+        private readonly TaskStatusManager $statuses,
+        private readonly TicketWorkflow $ticketWorkflow,
+    ) {}
 
     public function execute(User $actor, Task $task, array $data): Task
     {
@@ -26,6 +30,9 @@ class UpdateTaskAction
             'due_date' => $data['due_date'] ?? null,
             ...$this->statuses->attributes($status, $task),
         ]);
+
+        $task->loadMissing('sourceTicket');
+        $this->ticketWorkflow->syncFromTaskStatus($task, $status);
 
         return $task;
     }

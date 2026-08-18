@@ -8,6 +8,7 @@ use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class CustomerManagementTest extends TestCase
@@ -88,6 +89,78 @@ class CustomerManagementTest extends TestCase
             'phone' => '09123456789',
             'is_primary' => true,
         ]);
+    }
+
+    public function test_authorized_user_can_define_password_when_creating_customer(): void
+    {
+        $this->actingAs($this->admin)->post('/customers', $this->payload([
+            'password' => 'SecurePass123',
+            'password_confirmation' => 'SecurePass123',
+        ]))->assertRedirect();
+
+        $customer = Customer::query()->firstOrFail();
+
+        $this->assertNotSame('SecurePass123', $customer->password);
+        $this->assertTrue(Hash::check('SecurePass123', $customer->password));
+        $this->assertNotNull($customer->password_changed_at);
+    }
+
+    public function test_customer_password_must_have_minimum_length_uppercase_and_number(): void
+    {
+        $this->actingAs($this->admin)->post('/customers', $this->payload([
+            'password' => 'Short1',
+            'password_confirmation' => 'Short1',
+        ]))->assertSessionHasErrors('password');
+
+        $this->actingAs($this->admin)->post('/customers', $this->payload([
+            'password' => 'lowercase123',
+            'password_confirmation' => 'lowercase123',
+        ]))->assertSessionHasErrors('password');
+
+        $this->actingAs($this->admin)->post('/customers', $this->payload([
+            'password' => 'NoNumberPassword',
+            'password_confirmation' => 'NoNumberPassword',
+        ]))->assertSessionHasErrors('password');
+
+        $this->assertDatabaseCount('customers', 0);
+    }
+
+    public function test_customer_password_form_shows_live_password_requirements(): void
+    {
+        $customer = $this->createCustomer('مشتری تست رمز', '09121111111');
+
+        $this->actingAs($this->admin)->get("/customers/{$customer->id}/edit")
+            ->assertOk()
+            ->assertSee('حداقل ۸ کاراکتر')
+            ->assertSee('حداقل یک حرف بزرگ انگلیسی (A-Z)')
+            ->assertSee('حداقل یک عدد (0-9)')
+            ->assertSee('نمایش رمز عبور');
+    }
+
+    public function test_customer_password_can_be_changed_and_blank_password_keeps_current_password(): void
+    {
+        $customer = $this->createCustomer('مشتری رمزدار', '09121111111');
+        $customer->forceFill([
+            'password' => Hash::make('OldPassword123'),
+            'password_changed_at' => now()->subDay(),
+        ])->save();
+        $originalHash = $customer->password;
+
+        $this->actingAs($this->admin)->put("/customers/{$customer->id}", $this->payload([
+            'phones' => [['phone' => '09121111111']],
+            'password' => '',
+            'password_confirmation' => '',
+        ]))->assertRedirect("/customers/{$customer->id}");
+
+        $this->assertSame($originalHash, $customer->fresh()->password);
+
+        $this->actingAs($this->admin)->put("/customers/{$customer->id}", $this->payload([
+            'phones' => [['phone' => '09121111111']],
+            'password' => 'NewPassword123',
+            'password_confirmation' => 'NewPassword123',
+        ]))->assertRedirect("/customers/{$customer->id}");
+
+        $this->assertTrue(Hash::check('NewPassword123', $customer->fresh()->password));
     }
 
     public function test_customer_can_have_multiple_phones_and_exactly_one_primary_phone(): void

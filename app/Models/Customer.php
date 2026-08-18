@@ -13,11 +13,16 @@ class Customer extends Authenticatable
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'company_name', 'city', 'address', 'notes', 'is_active'];
+    protected $fillable = ['name', 'company_name', 'city', 'address', 'notes', 'is_active', 'password', 'password_changed_at'];
+
+    protected $hidden = ['password'];
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return [
+            'is_active' => 'boolean',
+            'password_changed_at' => 'datetime',
+        ];
     }
 
     public function phones(): HasMany
@@ -38,5 +43,15 @@ class Customer extends Authenticatable
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class)->latest();
+    }
+
+    public function ledgerEntries(): HasMany
+    {
+        return $this->hasMany(CustomerLedgerEntry::class);
+    }
+
+    public function paymentReceipts(): HasMany
+    {
+        return $this->hasMany(CustomerPaymentReceipt::class);
     }
 }

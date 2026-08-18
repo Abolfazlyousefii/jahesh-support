@@ -40,4 +40,45 @@ enum TaskStatus: string
     {
         return in_array($this, [self::Completed, self::Cancelled], true);
     }
+
+    public function isWorkflow(): bool
+    {
+        return in_array($this, self::workflow(), true);
+    }
+
+    /**
+     * @return array<int, self>
+     */
+    public static function workflow(): array
+    {
+        return [
+            self::New,
+            self::Pending,
+            self::InProgress,
+            self::Review,
+        ];
+    }
+
+    /**
+     * @return array<int, self>
+     */
+    public static function secondary(): array
+    {
+        return [
+            self::Completed,
+            self::Paused,
+            self::Cancelled,
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function workflowValues(): array
+    {
+        return array_map(
+            static fn (self $status): string => $status->value,
+            self::workflow(),
+        );
+    }
 }

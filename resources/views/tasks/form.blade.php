@@ -49,17 +49,27 @@
         <label for="status" class="form-label">وضعیت</label>
         <select id="status" name="status" class="form-control" required>
             @foreach($statuses as $status)
-                <option value="{{ $status->value }}" @selected(old('status', $task?->status?->value ?? \App\Enums\TaskStatus::New->value) === $status->value)>{{ $status->label() }}</option>
+                <option
+                    value="{{ $status->value }}"
+                    @selected(old('status', $task?->status?->value ?? request('status', \App\Enums\TaskStatus::New->value)) === $status->value)
+                >{{ $status->label() }}</option>
             @endforeach
         </select>
         @error('status')<p class="form-error">{{ $message }}</p>@enderror
     </div>
 
-    <x-input label="تاریخ شروع" name="start_date" type="date" :value="$task?->start_date?->format('Y-m-d')" />
-    <x-input label="ددلاین" name="due_date" type="date" :value="$task?->due_date?->format('Y-m-d')" />
-</div>
+    <x-persian-date-input
+        label="تاریخ شروع"
+        name="start_date"
+        :value="$task?->start_date"
+    />
 
-<p class="mt-3 text-xs text-gray-500">تاریخ ورودی میلادی است و پس از ذخیره در پنل به‌صورت شمسی نمایش داده می‌شود.</p>
+    <x-persian-date-input
+        label="ددلاین"
+        name="due_date"
+        :value="$task?->due_date"
+    />
+</div>
 
 <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row">
     <a href="{{ $task ? route('tasks.show', $task) : route('tasks.index') }}" class="btn btn-secondary">انصراف</a>

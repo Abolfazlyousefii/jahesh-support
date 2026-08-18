@@ -8,6 +8,7 @@ use App\Models\CustomerLoginCode;
 use App\Models\CustomerPhone;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class CustomerPortalAuthenticationTest extends TestCase
@@ -21,6 +22,48 @@ class CustomerPortalAuthenticationTest extends TestCase
         parent::setUp();
         $this->sender = new CapturingOtpSender;
         $this->app->instance(OtpSender::class, $this->sender);
+    }
+
+    public function test_customer_with_password_can_login_using_any_registered_phone(): void
+    {
+        $customer = $this->customerWithPhone('09121111111');
+        $customer->phones()->create(['phone' => '09351111111', 'is_primary' => false]);
+        $customer->forceFill(['password' => Hash::make('SecurePass123')])->save();
+
+        $this->post('/portal/login/password', [
+            'phone' => '۰۹۳۵۱۱۱۱۱۱۱',
+            'password' => 'SecurePass123',
+        ])->assertRedirect('/portal');
+
+        $this->assertAuthenticatedAs($customer, 'customer');
+    }
+
+    public function test_wrong_password_customer_without_password_and_inactive_customer_are_rejected(): void
+    {
+        $customer = $this->customerWithPhone('09121111111');
+        $customer->forceFill(['password' => Hash::make('SecurePass123')])->save();
+
+        $this->post('/portal/login/password', [
+            'phone' => '09121111111',
+            'password' => 'WrongPassword',
+        ])->assertSessionHasErrors('password');
+        $this->assertGuest('customer');
+
+        $withoutPassword = $this->customerWithPhone('09122222222');
+        $this->post('/portal/login/password', [
+            'phone' => '09122222222',
+            'password' => 'Anything123',
+        ])->assertSessionHasErrors('password');
+        $this->assertGuest('customer');
+
+        $inactive = $this->customerWithPhone('09123333333', false);
+        $inactive->forceFill(['password' => Hash::make('SecurePass123')])->save();
+        $this->post('/portal/login/password', [
+            'phone' => '09123333333',
+            'password' => 'SecurePass123',
+        ])->assertSessionHasErrors('password');
+        $this->assertGuest('customer');
+        $this->assertNotNull($withoutPassword);
     }
 
     public function test_registered_primary_or_secondary_phone_can_request_otp(): void

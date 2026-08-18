@@ -4,6 +4,7 @@ namespace App\Actions\Customers;
 
 use App\Models\Customer;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class CreateCustomerAction
 {
@@ -29,6 +30,13 @@ class CreateCustomerAction
 
     private function customerData(array $data): array
     {
-        return collect($data)->only(['name', 'company_name', 'city', 'address', 'notes', 'is_active'])->all();
+        $customerData = collect($data)->only(['name', 'company_name', 'city', 'address', 'notes', 'is_active'])->all();
+
+        if (filled($data['password'] ?? null)) {
+            $customerData['password'] = Hash::make((string) $data['password']);
+            $customerData['password_changed_at'] = now();
+        }
+
+        return $customerData;
     }
 }

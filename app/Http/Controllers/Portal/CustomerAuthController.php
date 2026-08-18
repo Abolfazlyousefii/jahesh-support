@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Portal;
 use App\Actions\CustomerAuth\RequestCustomerOtpAction;
 use App\Actions\CustomerAuth\VerifyCustomerOtpAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Portal\PasswordCustomerLoginRequest;
 use App\Http\Requests\Portal\RequestCustomerOtpRequest;
 use App\Http\Requests\Portal\VerifyCustomerOtpRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Models\Customer;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -18,6 +21,35 @@ class CustomerAuthController extends Controller
     public function create(): View
     {
         return view('portal.auth.login');
+    }
+
+    public function passwordLogin(PasswordCustomerLoginRequest $request): RedirectResponse
+    {
+        $phone = $request->validated('phone');
+        $password = (string) $request->validated('password');
+
+        $customer = Customer::query()
+            ->active()
+            ->whereHas('phones', fn ($query) => $query->where('phone', $phone))
+            ->first();
+
+        if ($customer === null || blank($customer->password) || ! Hash::check($password, $customer->password)) {
+            throw ValidationException::withMessages([
+                'password' => 'شماره موبایل یا رمز عبور صحیح نیست.',
+            ]);
+        }
+
+        if (Hash::needsRehash($customer->password)) {
+            $customer->forceFill([
+                'password' => Hash::make($password),
+                'password_changed_at' => now(),
+            ])->save();
+        }
+
+        Auth::guard('customer')->login($customer);
+        $request->session()->regenerate();
+
+        return redirect()->route('portal.dashboard');
     }
 
     public function requestCode(RequestCustomerOtpRequest $request, RequestCustomerOtpAction $action): RedirectResponse

@@ -15,6 +15,8 @@ use App\Models\Task;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -35,7 +37,16 @@ class TaskController extends Controller
         $customerId = $request->integer('customer_id') ?: null;
         $assigneeId = $user->can('tasks.view_all') ? ($request->integer('assignee_id') ?: null) : null;
 
-        $tasks = Task::query()
+        $requestedView = $request->string('view')->toString();
+        $view = $requestedView === 'list' ? 'list' : 'board';
+
+        // وضعیت‌های بایگانی/ثانویه در برد ستون دائمی ندارند؛
+        // در صورت فیلتر مستقیم روی آن‌ها، لیست خواناتر و کامل‌تر است.
+        if (($status !== null && ! $status->isWorkflow()) || $quick === 'completed') {
+            $view = 'list';
+        }
+
+        $baseQuery = Task::query()
             ->with(['customer', 'assignee', 'creator'])
             ->when($scope === 'mine', fn (Builder $query) => $query->assignedTo($user))
             ->when($search !== '', function (Builder $query) use ($search) {
@@ -54,17 +65,59 @@ class TaskController extends Controller
             ->when($quick === 'in_progress', fn (Builder $query) => $query->where('status', TaskStatus::InProgress))
             ->when($quick === 'completed', fn (Builder $query) => $query->where('status', TaskStatus::Completed))
             ->when($priority, fn (Builder $query) => $query->where('priority', $priority))
-            ->when($status, fn (Builder $query) => $query->where('status', $status))
             ->when($customerId, fn (Builder $query) => $query->where('customer_id', $customerId))
-            ->when($assigneeId, fn (Builder $query) => $query->where('assignee_id', $assigneeId))
-            ->orderByRaw('due_date IS NULL')
-            ->orderBy('due_date')
-            ->latest('id')
-            ->paginate(20)
-            ->withQueryString();
+            ->when($assigneeId, fn (Builder $query) => $query->where('assignee_id', $assigneeId));
+
+        $boardCounts = collect(TaskStatus::cases())
+            ->mapWithKeys(fn (TaskStatus $item) => [$item->value => 0]);
+
+        if ($view === 'board') {
+            $statusCounts = (clone $baseQuery)
+                ->reorder()
+                ->selectRaw('status, COUNT(*) as aggregate')
+                ->groupBy('status')
+                ->toBase()
+                ->pluck('aggregate', 'status');
+
+            $boardCounts = $boardCounts->map(
+                fn (int $count, string $key) => (int) ($statusCounts[$key] ?? $count),
+            );
+        }
+
+        $query = (clone $baseQuery)
+            ->when($status, fn (Builder $query) => $query->where('status', $status));
+
+        $tasks = null;
+        $boardTasks = collect();
+
+        if ($view === 'board') {
+            $boardTasks = $query
+                ->whereIn('status', TaskStatus::workflowValues())
+                ->orderByRaw("CASE priority WHEN 'urgent' THEN 1 WHEN 'important' THEN 2 ELSE 3 END")
+                ->orderByRaw('due_date IS NULL')
+                ->orderBy('due_date')
+                ->latest('id')
+                ->get()
+                ->groupBy(fn (Task $task) => $task->status->value);
+        } else {
+            $tasks = $query
+                ->orderByRaw('due_date IS NULL')
+                ->orderBy('due_date')
+                ->latest('id')
+                ->paginate(20)
+                ->withQueryString();
+        }
+
+        $mobileStatus = $this->mobileBoardStatus($request, $status, $boardCounts);
 
         return view('tasks.index', [
             'tasks' => $tasks,
+            'boardTasks' => $boardTasks,
+            'boardCounts' => $boardCounts,
+            'workflowStatuses' => TaskStatus::workflow(),
+            'secondaryStatuses' => TaskStatus::secondary(),
+            'mobileStatus' => $mobileStatus,
+            'view' => $view,
             'search' => $search,
             'quick' => $quick,
             'scope' => $scope,
@@ -74,8 +127,12 @@ class TaskController extends Controller
             'assigneeId' => $assigneeId,
             'priorities' => TaskPriority::cases(),
             'statuses' => TaskStatus::cases(),
+            'statusLabels' => collect(TaskStatus::cases())
+                ->mapWithKeys(fn (TaskStatus $item) => [$item->value => $item->label()])
+                ->all(),
             'customers' => Customer::query()->active()->orderBy('name')->get(['id', 'name', 'company_name']),
             'assignees' => $user->can('tasks.view_all') ? $this->activeAssignees() : collect(),
+            'canAssign' => $user->can('tasks.assign'),
         ]);
     }
 
@@ -84,9 +141,39 @@ class TaskController extends Controller
         return view('tasks.create', $this->formData($request->user()));
     }
 
-    public function store(StoreTaskRequest $request, CreateTaskAction $action): RedirectResponse
+    public function store(StoreTaskRequest $request, CreateTaskAction $action): RedirectResponse|JsonResponse
     {
         $task = $action->execute($request->user(), $request->validated());
+
+        if ($request->expectsJson()) {
+            $task->load(['customer', 'assignee.roles', 'creator']);
+
+            $scope = $request->user()->can('tasks.view_all')
+                && $request->string('scope')->toString() === 'all'
+                    ? 'all'
+                    : 'mine';
+
+            $visibleOnCurrentBoard = $scope === 'all' || $task->assignee_id === $request->user()->id;
+
+            return response()->json([
+                'message' => 'تسک با موفقیت ایجاد شد.',
+                'task_id' => $task->id,
+                'status' => $task->status->value,
+                'visible_on_current_board' => $visibleOnCurrentBoard,
+                'desktop_html' => view('tasks._card', [
+                    'task' => $task,
+                    'scope' => $scope,
+                    'statuses' => TaskStatus::cases(),
+                    'mode' => 'desktop',
+                ])->render(),
+                'mobile_html' => view('tasks._card', [
+                    'task' => $task,
+                    'scope' => $scope,
+                    'statuses' => TaskStatus::cases(),
+                    'mode' => 'mobile',
+                ])->render(),
+            ], 201);
+        }
 
         return redirect()->route('tasks.show', $task)->with('success', 'تسک با موفقیت ایجاد شد.');
     }
@@ -115,10 +202,25 @@ class TaskController extends Controller
         return redirect()->route('tasks.show', $task)->with('success', 'تسک به‌روزرسانی شد.');
     }
 
-    public function updateStatus(UpdateTaskStatusRequest $request, Task $task, UpdateTaskStatusAction $action): RedirectResponse
-    {
+    public function updateStatus(
+        UpdateTaskStatusRequest $request,
+        Task $task,
+        UpdateTaskStatusAction $action,
+    ): RedirectResponse|JsonResponse {
         Gate::authorize('updateStatus', $task);
-        $action->execute($task, TaskStatus::from($request->validated('status')));
+
+        $status = TaskStatus::from($request->validated('status'));
+        $action->execute($task, $status);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'وضعیت تسک تغییر کرد.',
+                'task_id' => $task->id,
+                'status' => $status->value,
+                'status_label' => $status->label(),
+                'completed_at' => $task->fresh()->completed_at?->toIso8601String(),
+            ]);
+        }
 
         return back()->with('success', 'وضعیت تسک تغییر کرد.');
     }
@@ -150,5 +252,26 @@ class TaskController extends Controller
     private function activeAssignees(): Collection
     {
         return User::query()->with('roles')->where('is_active', true)->orderBy('name')->get();
+    }
+
+    private function mobileBoardStatus(Request $request, ?TaskStatus $filteredStatus, SupportCollection $counts): string
+    {
+        $requested = TaskStatus::tryFrom($request->string('column')->toString());
+
+        if ($requested?->isWorkflow()) {
+            return $requested->value;
+        }
+
+        if ($filteredStatus?->isWorkflow()) {
+            return $filteredStatus->value;
+        }
+
+        foreach ([TaskStatus::InProgress, TaskStatus::Review, TaskStatus::Pending, TaskStatus::New] as $status) {
+            if (($counts[$status->value] ?? 0) > 0) {
+                return $status->value;
+            }
+        }
+
+        return TaskStatus::New->value;
     }
 }

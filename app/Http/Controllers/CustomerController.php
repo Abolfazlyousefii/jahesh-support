@@ -8,6 +8,7 @@ use App\Http\Requests\Customer\StoreCustomerRequest;
 use App\Http\Requests\Customer\UpdateCustomerRequest;
 use App\Models\Customer;
 use App\Models\Ticket;
+use App\Services\Finance\CustomerFinanceService;
 use App\Support\PhoneNormalizer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -57,14 +58,19 @@ class CustomerController extends Controller
         return redirect()->route('customers.show', $customer)->with('success', 'مشتری با موفقیت ثبت شد.');
     }
 
-    public function show(Request $request, Customer $customer): View
+    public function show(Request $request, Customer $customer, CustomerFinanceService $finance): View
     {
         $customer->load('phones');
         $recentTickets = $request->user()->can('tickets.view')
             ? Ticket::query()->visibleTo($request->user())->where('customer_id', $customer->id)->latest()->limit(5)->get()
             : collect();
 
-        return view('customers.show', compact('customer', 'recentTickets'));
+        $financeSummary = $request->user()->can('finance.view') ? $finance->summary($customer) : null;
+        $recentLedgerEntries = $financeSummary !== null
+            ? $customer->ledgerEntries()->with('creator')->latest('entry_date')->latest('id')->limit(5)->get()
+            : collect();
+
+        return view('customers.show', compact('customer', 'recentTickets', 'financeSummary', 'recentLedgerEntries'));
     }
 
     public function edit(Customer $customer): View

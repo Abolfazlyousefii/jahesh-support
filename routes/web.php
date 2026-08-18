@@ -3,10 +3,17 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\Finance\BankAccountController;
+use App\Http\Controllers\Finance\CustomerFinanceController;
+use App\Http\Controllers\Finance\FinanceController;
+use App\Http\Controllers\Finance\LedgerEntryController;
+use App\Http\Controllers\Finance\PaymentReceiptController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Portal\CustomerAuthController;
 use App\Http\Controllers\Portal\PortalDashboardController;
 use App\Http\Controllers\Portal\PortalProfileController;
+use App\Http\Controllers\Portal\PortalFinanceController;
+use App\Http\Controllers\Portal\PortalPaymentReceiptController;
 use App\Http\Controllers\Portal\PortalTicketController;
 use App\Http\Controllers\Portal\PortalTicketReplyController;
 use App\Http\Controllers\RoleController;
@@ -29,6 +36,7 @@ Route::middleware('guest')->group(function () {
 Route::prefix('portal')->name('portal.')->group(function () {
     Route::middleware('customer.guest')->group(function () {
         Route::get('/login', [CustomerAuthController::class, 'create'])->name('login');
+        Route::post('/login/password', [CustomerAuthController::class, 'passwordLogin'])->middleware('throttle:6,1')->name('login.password');
         Route::post('/login', [CustomerAuthController::class, 'requestCode'])->middleware('throttle:customer-otp-request')->name('login.request');
         Route::get('/verify', [CustomerAuthController::class, 'verification'])->name('verify');
         Route::post('/verify', [CustomerAuthController::class, 'verify'])->middleware('throttle:customer-otp-verify')->name('verify.store');
@@ -37,7 +45,11 @@ Route::prefix('portal')->name('portal.')->group(function () {
 
     Route::middleware(['customer.auth', 'customer.active'])->group(function () {
         Route::get('/', PortalDashboardController::class)->name('dashboard');
+        Route::get('/dashboard/active-tickets', [PortalDashboardController::class, 'activeTickets'])->name('dashboard.active-tickets');
         Route::get('/profile', PortalProfileController::class)->name('profile');
+        Route::get('/finance', PortalFinanceController::class)->name('finance.index');
+        Route::post('/finance/receipts', [PortalPaymentReceiptController::class, 'store'])->name('finance.receipts.store');
+        Route::get('/finance/receipts/{receipt}/file', [PortalPaymentReceiptController::class, 'file'])->name('finance.receipts.file');
         Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
         Route::get('/tickets', [PortalTicketController::class, 'index'])->name('tickets.index');
         Route::get('/tickets/create', [PortalTicketController::class, 'create'])->name('tickets.create');
@@ -50,6 +62,24 @@ Route::prefix('portal')->name('portal.')->group(function () {
 Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/logout', LogoutController::class)->name('logout');
     Route::get('/dashboard', DashboardController::class)->middleware('can:dashboard.view')->name('dashboard');
+
+    Route::prefix('finance')->name('finance.')->group(function () {
+        Route::get('/', [FinanceController::class, 'index'])->middleware('can:finance.view')->name('index');
+        Route::get('/customers/{customer}', [CustomerFinanceController::class, 'show'])->middleware('can:finance.view')->name('customers.show');
+        Route::post('/customers/{customer}/entries', [CustomerFinanceController::class, 'storeEntry'])->middleware('can:finance.create_entry')->name('customers.entries.store');
+        Route::patch('/entries/{entry}/void', [LedgerEntryController::class, 'void'])->middleware('can:finance.void_entry')->name('entries.void');
+
+        Route::get('/receipts', [PaymentReceiptController::class, 'index'])->middleware('can:finance.view')->name('receipts.index');
+        Route::get('/receipts/{receipt}', [PaymentReceiptController::class, 'show'])->middleware('can:finance.view')->name('receipts.show');
+        Route::get('/receipts/{receipt}/file', [PaymentReceiptController::class, 'file'])->middleware('can:finance.view')->name('receipts.file');
+        Route::patch('/receipts/{receipt}/approve', [PaymentReceiptController::class, 'approve'])->middleware('can:finance.review_payments')->name('receipts.approve');
+        Route::patch('/receipts/{receipt}/reject', [PaymentReceiptController::class, 'reject'])->middleware('can:finance.review_payments')->name('receipts.reject');
+
+        Route::get('/bank-accounts', [BankAccountController::class, 'index'])->middleware('can:finance.manage_bank_accounts')->name('bank-accounts.index');
+        Route::post('/bank-accounts', [BankAccountController::class, 'store'])->middleware('can:finance.manage_bank_accounts')->name('bank-accounts.store');
+        Route::put('/bank-accounts/{bankAccount}', [BankAccountController::class, 'update'])->middleware('can:finance.manage_bank_accounts')->name('bank-accounts.update');
+        Route::delete('/bank-accounts/{bankAccount}', [BankAccountController::class, 'destroy'])->middleware('can:finance.manage_bank_accounts')->name('bank-accounts.destroy');
+    });
 
     Route::prefix('tickets')->name('tickets.')->group(function () {
         Route::get('/', [TicketController::class, 'index'])->middleware('can:tickets.view')->name('index');

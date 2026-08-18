@@ -13,11 +13,15 @@ class CreateTicketAction
     public function execute(Customer $customer, array $data): Ticket
     {
         return DB::transaction(function () use ($customer, $data) {
+            $now = now();
+
             $ticket = Ticket::query()->create([
                 'customer_id' => $customer->id,
                 'subject' => $data['subject'],
                 'priority' => $data['priority'],
                 'status' => TicketStatus::New,
+                'last_customer_message_at' => $now,
+                'customer_last_read_at' => $now,
             ]);
 
             $ticket->messages()->create([
@@ -25,6 +29,8 @@ class CreateTicketAction
                 'author_id' => $customer->id,
                 'message_type' => TicketMessageType::Public,
                 'body' => $data['description'],
+                'created_at' => $now,
+                'updated_at' => $now,
             ]);
 
             return $ticket;

@@ -3,6 +3,7 @@
 namespace App\Actions\Tickets;
 
 use App\Enums\TicketMessageType;
+use App\Enums\TicketStatus;
 use App\Models\Customer;
 use App\Models\Ticket;
 use App\Models\TicketMessage;
@@ -14,9 +15,14 @@ class ReplyToTicketAction
 {
     public function __construct(private readonly TicketWorkflow $workflow) {}
 
-    public function execute(Ticket $ticket, Customer|User $author, string $body, TicketMessageType $type): TicketMessage
-    {
-        return DB::transaction(function () use ($ticket, $author, $body, $type) {
+    public function execute(
+        Ticket $ticket,
+        Customer|User $author,
+        string $body,
+        TicketMessageType $type,
+        ?TicketStatus $statusAfterReply = null,
+    ): TicketMessage {
+        return DB::transaction(function () use ($ticket, $author, $body, $type, $statusAfterReply) {
             $this->workflow->ensureWritable($ticket);
 
             $message = $ticket->messages()->create([
@@ -27,9 +33,11 @@ class ReplyToTicketAction
             ]);
 
             if ($author instanceof Customer) {
-                $this->workflow->afterCustomerReply($ticket);
+                $this->workflow->afterCustomerReply($ticket, $message->created_at);
+            } elseif ($type === TicketMessageType::Public) {
+                $this->workflow->afterStaffPublicReply($ticket, $message->created_at, $statusAfterReply);
             } else {
-                $ticket->touch();
+                $this->workflow->afterInternalNote($ticket);
             }
 
             return $message;

@@ -36,6 +36,7 @@ class StoreCustomerRequest extends FormRequest
             'address' => ['nullable', 'string', 'max:5000'],
             'notes' => ['nullable', 'string', 'max:10000'],
             'is_active' => ['boolean'],
+            'password' => ['nullable', 'string', 'min:8', 'max:255', 'regex:/[A-Z]/', 'regex:/[0-9]/', 'confirmed'],
             'phones' => ['required', 'array', 'min:1'],
             'phones.*.phone' => ['required', new IranianMobile, 'distinct', Rule::unique('customer_phones', 'phone')],
             'primary_phone' => ['required', 'integer', Rule::in(array_keys($this->input('phones', [])))],
@@ -53,6 +54,9 @@ class StoreCustomerRequest extends FormRequest
             'phones.*.phone.unique' => 'این شماره موبایل قبلاً برای مشتری دیگری ثبت شده است.',
             'primary_phone.required' => 'شماره اصلی را انتخاب کنید.',
             'primary_phone.in' => 'شماره اصلی انتخاب‌شده معتبر نیست.',
+            'password.min' => 'رمز عبور مشتری باید حداقل ۸ کاراکتر باشد.',
+            'password.regex' => 'رمز عبور باید حداقل یک حرف بزرگ انگلیسی (A-Z) و حداقل یک عدد داشته باشد.',
+            'password.confirmed' => 'تکرار رمز عبور با رمز عبور یکسان نیست.',
         ];
     }
 

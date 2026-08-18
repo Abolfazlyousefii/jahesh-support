@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Support\PhoneNormalizer;
+use App\Support\TicketWorkflow;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
@@ -20,17 +21,24 @@ class TicketController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
+        $canViewAll = $user->can('tickets.view_all');
+        $scope = $canViewAll && $request->string('scope')->toString() === 'mine' ? 'mine' : ($canViewAll ? 'all' : 'mine');
         $search = trim($request->string('q')->toString());
         $normalizedSearch = PhoneNormalizer::normalize($search);
         $quick = TicketStatus::tryFrom($request->string('quick')->toString());
         $status = TicketStatus::tryFrom($request->string('status')->toString());
         $priority = TicketPriority::tryFrom($request->string('priority')->toString());
-        $assigneeId = $user->can('tickets.view_all') ? ($request->integer('assignee_id') ?: null) : null;
+        $assigneeFilter = $canViewAll ? $request->string('assignee_id')->toString() : '';
+        $unassignedOnly = $assigneeFilter === 'unassigned';
+        $assigneeId = $canViewAll && ctype_digit($assigneeFilter) && (int) $assigneeFilter > 0
+            ? (int) $assigneeFilter
+            : null;
         $customerId = $request->integer('customer_id') ?: null;
+        $unreadOnly = $request->boolean('unread');
 
-        $tickets = Ticket::query()
-            ->with(['customer.primaryPhone', 'assignee'])
-            ->visibleTo($user)
+        $baseQuery = Ticket::query()
+            ->with(['customer.primaryPhone', 'assignee', 'latestPublicMessage.author'])
+            ->when($scope === 'mine', fn (Builder $query) => $query->assignedTo($user))
             ->when($search !== '', function (Builder $query) use ($search, $normalizedSearch) {
                 $query->where(function (Builder $query) use ($search, $normalizedSearch) {
                     $query->where('subject', 'like', "%{$search}%")
@@ -43,11 +51,27 @@ class TicketController extends Controller
                             )));
                 });
             })
+            ->when($priority, fn (Builder $query) => $query->where('priority', $priority))
+            ->when($unassignedOnly, fn (Builder $query) => $query->whereNull('assigned_to'))
+            ->when($assigneeId, fn (Builder $query) => $query->where('assigned_to', $assigneeId))
+            ->when($customerId, fn (Builder $query) => $query->where('customer_id', $customerId));
+
+        $statusCounts = collect(TicketStatus::cases())->mapWithKeys(fn (TicketStatus $item) => [$item->value => 0]);
+        $rawCounts = (clone $baseQuery)
+            ->reorder()
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->groupBy('status')
+            ->toBase()
+            ->pluck('aggregate', 'status');
+        $statusCounts = $statusCounts->map(fn (int $count, string $key) => (int) ($rawCounts[$key] ?? $count));
+        $unreadCount = (clone $baseQuery)->unreadForStaff()->count();
+
+        $tickets = (clone $baseQuery)
             ->when($quick, fn (Builder $query) => $query->where('status', $quick))
             ->when($status, fn (Builder $query) => $query->where('status', $status))
-            ->when($priority, fn (Builder $query) => $query->where('priority', $priority))
-            ->when($assigneeId, fn (Builder $query) => $query->where('assigned_to', $assigneeId))
-            ->when($customerId, fn (Builder $query) => $query->where('customer_id', $customerId))
+            ->when($unreadOnly, fn (Builder $query) => $query->unreadForStaff())
+            ->orderByRaw('CASE WHEN last_customer_message_at IS NOT NULL AND (assignee_last_read_at IS NULL OR last_customer_message_at > assignee_last_read_at) THEN 0 ELSE 1 END')
+            ->orderByRaw("CASE priority WHEN 'urgent' THEN 1 WHEN 'important' THEN 2 ELSE 3 END")
             ->latest('updated_at')
             ->paginate(20)
             ->withQueryString();
@@ -59,18 +83,24 @@ class TicketController extends Controller
             'status' => $status?->value,
             'priority' => $priority?->value,
             'assigneeId' => $assigneeId,
+            'unassignedOnly' => $unassignedOnly,
             'customerId' => $customerId,
+            'scope' => $scope,
+            'unreadOnly' => $unreadOnly,
+            'unreadCount' => $unreadCount,
+            'statusCounts' => $statusCounts,
             'statuses' => TicketStatus::cases(),
             'priorities' => TicketPriority::cases(),
-            'assignees' => $user->can('tickets.view_all') ? $this->activeAssignees() : collect(),
+            'assignees' => $canViewAll ? $this->activeAssignees() : collect(),
             'customers' => Customer::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
-    public function show(Ticket $ticket): View
+    public function show(Request $request, Ticket $ticket, TicketWorkflow $workflow): View
     {
         Gate::authorize('view', $ticket);
-        $ticket->load(['customer.primaryPhone', 'assignee', 'messages.author', 'task']);
+        $workflow->markStaffRead($ticket, $request->user());
+        $ticket->refresh()->load(['customer.primaryPhone', 'assignee', 'messages.author', 'task.assignee']);
 
         return view('tickets.show', [
             'ticket' => $ticket,
