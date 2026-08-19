@@ -6,5 +6,9 @@
     @can('team.view')<a href="{{ route('team.index') }}" class="nav-link {{ request()->routeIs('team.*') ? 'active' : '' }}"><x-icon name="users" />اعضای تیم</a>@endcan
     @can('roles.view')<a href="{{ route('roles.index') }}" class="nav-link {{ request()->routeIs('roles.*') ? 'active' : '' }}"><x-icon name="shield" />نقش‌ها و دسترسی‌ها</a>@endcan
     @can('customers.view')<a href="{{ route('customers.index') }}" class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}"><x-icon name="customers" />مشتریان</a>@endcan
-    @can('settings.sms.manage')<a href="{{ route('settings.sms.index') }}" class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}"><x-icon name="settings" />تنظیمات</a>@endcan
+    @can('activity.view')<a href="{{ route('activity.index') }}" class="nav-link {{ request()->routeIs('activity.*') ? 'active' : '' }}"><x-icon name="activity" />گزارش فعالیت‌ها</a>@endcan
+    @canany(['settings.general.manage', 'settings.sms.manage'])
+        @php($settingsHome = auth()->user()->can('settings.general.manage') ? route('settings.general.index') : route('settings.sms.index'))
+        <a href="{{ $settingsHome }}" class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}"><x-icon name="settings" />تنظیمات</a>
+    @endcanany
 </nav>

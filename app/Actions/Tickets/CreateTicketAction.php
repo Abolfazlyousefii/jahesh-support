@@ -6,12 +6,18 @@ use App\Enums\TicketMessageType;
 use App\Enums\TicketStatus;
 use App\Models\Customer;
 use App\Models\Ticket;
+use App\Services\Activity\ActivityLogger;
+use App\Services\Notifications\InAppNotifier;
 use App\Services\Sms\SmsNotifier;
 use Illuminate\Support\Facades\DB;
 
 class CreateTicketAction
 {
-    public function __construct(private readonly SmsNotifier $sms) {}
+    public function __construct(
+        private readonly SmsNotifier $sms,
+        private readonly InAppNotifier $notifications,
+        private readonly ActivityLogger $activity,
+    ) {}
 
     public function execute(Customer $customer, array $data): Ticket
     {
@@ -39,7 +45,16 @@ class CreateTicketAction
             return $ticket;
         });
 
+        $this->activity->record(
+            'ticket.created',
+            $ticket,
+            $customer,
+            'مشتری یک تیکت جدید ثبت کرد.',
+            new: $this->activity->snapshot($ticket, ['subject', 'priority', 'status', 'customer_id']),
+        );
+
         $this->sms->ticketCreated($ticket);
+        $this->notifications->ticketCreated($ticket);
 
         return $ticket;
     }

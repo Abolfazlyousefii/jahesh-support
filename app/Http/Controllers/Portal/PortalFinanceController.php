@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Portal;
 use App\Http\Controllers\Controller;
 use App\Models\FinancialBankAccount;
 use App\Services\Finance\CustomerFinanceService;
+use App\Services\Settings\SettingsService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -21,7 +22,7 @@ class PortalFinanceController extends Controller
                 ->effective()
                 ->latest('entry_date')
                 ->latest('id')
-                ->paginate(15, ['*'], 'ledger_page'),
+                ->paginate(app(SettingsService::class)->paginationPerPage(), ['*'], 'ledger_page'),
             'receipts' => $customer->paymentReceipts()
                 ->with(['bankAccount', 'ledgerEntry'])
                 ->latest()

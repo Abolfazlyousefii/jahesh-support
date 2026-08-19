@@ -31,6 +31,8 @@ class PermissionMatrixScenarioTest extends ScenarioTestCase
         $this->actingAs($this->manager)->get('/roles')->assertForbidden();
         $this->actingAs($this->manager)->get('/finance/bank-accounts')->assertForbidden();
         $this->actingAs($this->manager)->get('/settings/sms')->assertForbidden();
+        $this->actingAs($this->manager)->get('/settings/general')->assertForbidden();
+        $this->actingAs($this->manager)->get('/activity')->assertForbidden();
 
         // Team Member: فقط عملیات داخلی خودش؛ بدون مشتری و مالی و تنظیمات.
         $this->actingAs($this->member)->get('/dashboard')->assertOk();
@@ -43,6 +45,8 @@ class PermissionMatrixScenarioTest extends ScenarioTestCase
         $this->actingAs($this->member)->get('/team')->assertForbidden();
         $this->actingAs($this->member)->get('/roles')->assertForbidden();
         $this->actingAs($this->member)->get('/settings/sms')->assertForbidden();
+        $this->actingAs($this->member)->get('/settings/general')->assertForbidden();
+        $this->actingAs($this->member)->get('/activity')->assertForbidden();
 
         // عضو تیم حتی با درخواست Crafted هم نباید بتواند تیکت را Assign کند.
         $this->actingAs($this->member)->patch("/tickets/{$ticket->id}/assignment", [
@@ -55,5 +59,7 @@ class PermissionMatrixScenarioTest extends ScenarioTestCase
         $this->actingAs($this->admin)->get('/roles')->assertOk();
         $this->actingAs($this->admin)->get('/finance/bank-accounts')->assertOk();
         $this->actingAs($this->admin)->get('/settings/sms')->assertOk();
+        $this->actingAs($this->admin)->get('/settings/general')->assertOk();
+        $this->actingAs($this->admin)->get('/activity')->assertOk();
     }
 }

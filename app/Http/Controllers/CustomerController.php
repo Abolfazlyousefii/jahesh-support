@@ -8,8 +8,10 @@ use App\Http\Requests\Customer\StoreCustomerRequest;
 use App\Http\Requests\Customer\UpdateCustomerRequest;
 use App\Models\Customer;
 use App\Models\Ticket;
+use App\Services\Activity\ActivityLogger;
 use App\Services\Finance\CustomerFinanceService;
 use App\Support\PhoneNormalizer;
+use App\Services\Settings\SettingsService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,7 +42,7 @@ class CustomerController extends Controller
             ->when($status === 'active', fn (Builder $query) => $query->where('is_active', true))
             ->when($status === 'inactive', fn (Builder $query) => $query->where('is_active', false))
             ->latest()
-            ->paginate(20)
+            ->paginate(app(SettingsService::class)->paginationPerPage())
             ->withQueryString();
 
         return view('customers.index', compact('customers', 'search', 'status'));
@@ -53,7 +55,7 @@ class CustomerController extends Controller
 
     public function store(StoreCustomerRequest $request, CreateCustomerAction $action): RedirectResponse
     {
-        $customer = $action->execute($request->validated());
+        $customer = $action->execute($request->validated(), $request->user());
 
         return redirect()->route('customers.show', $customer)->with('success', 'مشتری با موفقیت ثبت شد.');
     }
@@ -82,13 +84,25 @@ class CustomerController extends Controller
 
     public function update(UpdateCustomerRequest $request, Customer $customer, UpdateCustomerAction $action): RedirectResponse
     {
-        $action->execute($customer, $request->validated());
+        $action->execute($customer, $request->validated(), $request->user());
 
         return redirect()->route('customers.show', $customer)->with('success', 'اطلاعات مشتری به‌روزرسانی شد.');
     }
 
-    public function destroy(Customer $customer): RedirectResponse
+    public function destroy(Request $request, Customer $customer, ActivityLogger $activity): RedirectResponse
     {
+        $activity->record(
+            'customer.deleted',
+            $customer,
+            $request->user(),
+            'مشتری از سیستم حذف شد.',
+            old: [
+                'name' => $customer->name,
+                'company_name' => $customer->company_name,
+                'is_active' => $customer->is_active,
+            ],
+        );
+
         $customer->delete();
 
         return redirect()->route('customers.index')->with('success', 'مشتری حذف شد.');

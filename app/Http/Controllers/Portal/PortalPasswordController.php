@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Portal;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Portal\UpdateCustomerPasswordRequest;
 use App\Models\CustomerPasswordResetCode;
+use App\Services\Activity\ActivityLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class PortalPasswordController extends Controller
 {
-    public function update(UpdateCustomerPasswordRequest $request): RedirectResponse
+    public function update(UpdateCustomerPasswordRequest $request, ActivityLogger $activity): RedirectResponse
     {
         $customer = $request->user('customer');
 
@@ -33,6 +34,13 @@ class PortalPasswordController extends Controller
             ->update(['consumed_at' => now()]);
 
         $request->session()->regenerate();
+
+        $activity->record(
+            'customer.password_changed',
+            $customer,
+            $customer,
+            'مشتری رمز عبور حساب خود را تغییر داد.',
+        );
 
         return back()->with('status', 'رمز عبور حساب شما با موفقیت تغییر کرد.');
     }

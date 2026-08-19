@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\CustomerLedgerEntry;
 use App\Models\CustomerPaymentReceipt;
 use App\Support\PhoneNormalizer;
+use App\Services\Settings\SettingsService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -48,7 +49,7 @@ class FinanceController extends Controller
                 });
             })
             ->latest()
-            ->paginate(20)
+            ->paginate(app(SettingsService::class)->paginationPerPage())
             ->withQueryString();
 
         $debit = (int) CustomerLedgerEntry::query()->effective()->where('type', LedgerEntryType::Debit)->sum('amount');

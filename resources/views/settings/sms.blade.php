@@ -1,6 +1,8 @@
 <x-layouts.app title="تنظیمات پیامک">
     <x-page-header title="تنظیمات پیامک" description="اتصال ملی پیامک، مدیریت پترن‌ها و مشاهده گزارش ارسال‌ها" />
 
+    @include('settings.partials.tabs')
+
     @if($errors->has('sms_connection') || $errors->has('sms_test'))
         <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {{ $errors->first('sms_connection') ?: $errors->first('sms_test') }}

@@ -2,7 +2,7 @@
     <section class="portal-page-head">
         <div>
             <span class="portal-eyebrow">سلام {{ $customer->name }}</span>
-            <h1>خوش آمدید به پنل پشتیبانی جهش</h1>
+            <h1>{{ $generalSettings['portal.welcome_text'] ?? 'خوش آمدید به پنل پشتیبانی جهش' }}</h1>
             <p>درخواست‌های پشتیبانی باز و وضعیت مالی حساب شما از این بخش در دسترس است.</p>
         </div>
         <a href="{{ route('portal.tickets.create') }}" class="btn btn-primary portal-cta">ثبت درخواست جدید</a>

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\Finance\BankAccountController;
 use App\Http\Controllers\Finance\CustomerFinanceController;
@@ -9,16 +10,19 @@ use App\Http\Controllers\Finance\FinanceController;
 use App\Http\Controllers\Finance\LedgerEntryController;
 use App\Http\Controllers\Finance\PaymentReceiptController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Portal\CustomerAuthController;
 use App\Http\Controllers\Portal\CustomerPasswordResetController;
 use App\Http\Controllers\Portal\PortalPasswordController;
 use App\Http\Controllers\Portal\PortalDashboardController;
 use App\Http\Controllers\Portal\PortalProfileController;
 use App\Http\Controllers\Portal\PortalFinanceController;
+use App\Http\Controllers\Portal\PortalNotificationController;
 use App\Http\Controllers\Portal\PortalPaymentReceiptController;
 use App\Http\Controllers\Portal\PortalTicketController;
 use App\Http\Controllers\Portal\PortalTicketReplyController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\Settings\GeneralSettingsController;
 use App\Http\Controllers\Settings\SmsSettingsController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TeamController;
@@ -57,6 +61,10 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::get('/', PortalDashboardController::class)->name('dashboard');
         Route::get('/dashboard/active-tickets', [PortalDashboardController::class, 'activeTickets'])->name('dashboard.active-tickets');
         Route::get('/profile', PortalProfileController::class)->name('profile');
+        Route::get('/notifications', [PortalNotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/notifications/summary', [PortalNotificationController::class, 'summary'])->name('notifications.summary');
+        Route::post('/notifications/{notification}/open', [PortalNotificationController::class, 'open'])->name('notifications.open');
+        Route::post('/notifications/read-all', [PortalNotificationController::class, 'readAll'])->name('notifications.read-all');
         Route::put('/profile/password', [PortalPasswordController::class, 'update'])->middleware('throttle:6,1')->name('profile.password.update');
         Route::get('/finance', PortalFinanceController::class)->name('finance.index');
         Route::post('/finance/receipts', [PortalPaymentReceiptController::class, 'store'])->name('finance.receipts.store');
@@ -73,6 +81,16 @@ Route::prefix('portal')->name('portal.')->group(function () {
 Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/logout', LogoutController::class)->name('logout');
     Route::get('/dashboard', DashboardController::class)->middleware('can:dashboard.view')->name('dashboard');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/summary', [NotificationController::class, 'summary'])->name('notifications.summary');
+    Route::post('/notifications/{notification}/open', [NotificationController::class, 'open'])->name('notifications.open');
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+
+    Route::prefix('activity')->name('activity.')->middleware('can:activity.view')->group(function () {
+        Route::get('/', [ActivityLogController::class, 'index'])->name('index');
+        Route::get('/{activity}', [ActivityLogController::class, 'show'])->name('show');
+    });
 
     Route::prefix('finance')->name('finance.')->group(function () {
         Route::get('/', [FinanceController::class, 'index'])->middleware('can:finance.view')->name('index');
@@ -135,11 +153,26 @@ Route::middleware(['auth', 'active'])->group(function () {
     });
 
 
-    Route::prefix('settings')->name('settings.')->middleware('can:settings.sms.manage')->group(function () {
-        Route::get('/sms', [SmsSettingsController::class, 'index'])->name('sms.index');
-        Route::put('/sms', [SmsSettingsController::class, 'update'])->name('sms.update');
-        Route::post('/sms/test-connection', [SmsSettingsController::class, 'testConnection'])->name('sms.test-connection');
-        Route::post('/sms/test-pattern', [SmsSettingsController::class, 'testPattern'])->name('sms.test-pattern');
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/general', [GeneralSettingsController::class, 'index'])
+            ->middleware('can:settings.general.manage')
+            ->name('general.index');
+        Route::put('/general', [GeneralSettingsController::class, 'update'])
+            ->middleware('can:settings.general.manage')
+            ->name('general.update');
+
+        Route::get('/sms', [SmsSettingsController::class, 'index'])
+            ->middleware('can:settings.sms.manage')
+            ->name('sms.index');
+        Route::put('/sms', [SmsSettingsController::class, 'update'])
+            ->middleware('can:settings.sms.manage')
+            ->name('sms.update');
+        Route::post('/sms/test-connection', [SmsSettingsController::class, 'testConnection'])
+            ->middleware('can:settings.sms.manage')
+            ->name('sms.test-connection');
+        Route::post('/sms/test-pattern', [SmsSettingsController::class, 'testPattern'])
+            ->middleware('can:settings.sms.manage')
+            ->name('sms.test-pattern');
     });
 
     Route::prefix('roles')->name('roles.')->group(function () {

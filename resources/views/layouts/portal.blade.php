@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'پنل مشتری' }} | جهش</title>
+    <title>{{ $title ?? 'پنل مشتری' }} | {{ $generalSettings['general.app_name'] ?? 'سامانه پشتیبانی جهش' }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 @php($portalCustomer = auth('customer')->user())
@@ -13,8 +13,8 @@
             <a href="{{ route('portal.dashboard') }}" class="portal-brand">
                 <span class="portal-brand-mark">ج</span>
                 <span>
-                    <strong>پشتیبانی جهش</strong>
-                    <small>پنل مشتریان</small>
+                    <strong>{{ $generalSettings['portal.title'] ?? 'پشتیبانی جهش' }}</strong>
+                    <small>{{ $generalSettings['general.company_name'] ?? 'تیم جهش' }}</small>
                 </span>
             </a>
 
@@ -41,7 +41,13 @@
 
             <div class="portal-help-card">
                 <span>پشتیبانی</span>
-                <strong>سؤالی دارید یا مشکلی پیش آمده؟</strong>
+                <strong>{{ $generalSettings['general.support_text'] ?? 'تیم پشتیبانی آماده پاسخ‌گویی به شماست.' }}</strong>
+                @if(($generalSettings['portal.show_support_phone'] ?? true) && filled($generalSettings['general.support_phone'] ?? null))
+                    <small class="block text-xs text-gray-500">{{ $generalSettings['general.support_phone'] }}</small>
+                @endif
+                @if(($generalSettings['portal.show_support_hours'] ?? true) && filled($generalSettings['general.support_hours'] ?? null))
+                    <small class="block text-xs text-gray-500">{{ $generalSettings['general.support_hours'] }}</small>
+                @endif
                 <a href="{{ route('portal.tickets.create') }}">ثبت درخواست جدید</a>
             </div>
         </aside>
@@ -54,10 +60,18 @@
                 </div>
 
                 <div class="portal-user">
+                    <x-notification-bell
+                        guard="customer"
+                        index-route="portal.notifications.index"
+                        open-route="portal.notifications.open"
+                        read-all-route="portal.notifications.read-all"
+                        summary-route="portal.notifications.summary"
+                        :compact="true"
+                    />
                     <div class="portal-user-avatar">{{ mb_substr($portalCustomer?->name ?? 'ج', 0, 1) }}</div>
                     <div class="portal-user-copy">
                         <strong>{{ $portalCustomer?->name }}</strong>
-                        <span>{{ $portalCustomer?->company_name ?: 'مشتری جهش' }}</span>
+                        <span>{{ $portalCustomer?->company_name ?: ($generalSettings['general.company_name'] ?? 'تیم جهش') }}</span>
                     </div>
                     <form method="POST" action="{{ route('portal.logout') }}">
                         @csrf
@@ -72,12 +86,22 @@
             <header class="portal-mobile-header">
                 <a href="{{ route('portal.dashboard') }}" class="portal-mobile-brand">
                     <span class="portal-brand-mark">ج</span>
-                    <strong>پشتیبانی جهش</strong>
+                    <strong>{{ $generalSettings['portal.title'] ?? 'پشتیبانی جهش' }}</strong>
                 </a>
-                <form method="POST" action="{{ route('portal.logout') }}">
-                    @csrf
-                    <button class="portal-mobile-logout" type="submit">خروج</button>
-                </form>
+                <div class="flex items-center gap-2">
+                    <x-notification-bell
+                        guard="customer"
+                        index-route="portal.notifications.index"
+                        open-route="portal.notifications.open"
+                        read-all-route="portal.notifications.read-all"
+                        summary-route="portal.notifications.summary"
+                        :compact="true"
+                    />
+                    <form method="POST" action="{{ route('portal.logout') }}">
+                        @csrf
+                        <button class="portal-mobile-logout" type="submit">خروج</button>
+                    </form>
+                </div>
             </header>
 
             <main class="portal-content">

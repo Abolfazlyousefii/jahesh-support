@@ -13,6 +13,8 @@ use App\Http\Requests\Task\UpdateTaskStatusRequest;
 use App\Models\Customer;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\Activity\ActivityLogger;
+use App\Services\Settings\SettingsService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Collection as SupportCollection;
@@ -104,7 +106,7 @@ class TaskController extends Controller
                 ->orderByRaw('due_date IS NULL')
                 ->orderBy('due_date')
                 ->latest('id')
-                ->paginate(20)
+                ->paginate(app(SettingsService::class)->paginationPerPage())
                 ->withQueryString();
         }
 
@@ -210,7 +212,7 @@ class TaskController extends Controller
         Gate::authorize('updateStatus', $task);
 
         $status = TaskStatus::from($request->validated('status'));
-        $action->execute($task, $status);
+        $action->execute($task, $status, $request->user());
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -225,9 +227,18 @@ class TaskController extends Controller
         return back()->with('success', 'وضعیت تسک تغییر کرد.');
     }
 
-    public function destroy(Task $task): RedirectResponse
+    public function destroy(Request $request, Task $task, ActivityLogger $activity): RedirectResponse
     {
         Gate::authorize('delete', $task);
+
+        $activity->record(
+            'task.deleted',
+            $task,
+            $request->user(),
+            'تسک حذف شد.',
+            old: $activity->snapshot($task, ['title', 'customer_id', 'assignee_id', 'priority', 'status', 'due_date']),
+        );
+
         $task->delete();
 
         return redirect()->route('tasks.index')->with('success', 'تسک حذف شد.');

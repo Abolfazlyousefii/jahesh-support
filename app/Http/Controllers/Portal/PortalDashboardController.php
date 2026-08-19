@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Ticket;
 use App\Services\Finance\CustomerFinanceService;
+use App\Services\Settings\SettingsService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,25 +15,25 @@ use Illuminate\View\View;
 
 class PortalDashboardController extends Controller
 {
-    public function __invoke(Request $request, CustomerFinanceService $finance): View
+    public function __invoke(Request $request, CustomerFinanceService $finance, SettingsService $settings): View
     {
         $customer = $request->user('customer');
         $activeTicketsQuery = $this->activeTicketsQuery($customer);
 
         return view('portal.dashboard', [
             'customer' => $customer,
-            'activeTickets' => (clone $activeTicketsQuery)->limit(8)->get(),
+            'activeTickets' => (clone $activeTicketsQuery)->limit($settings->portalActiveTicketLimit())->get(),
             'activeTicketCount' => (clone $activeTicketsQuery)->count(),
             'financeSummary' => $finance->summary($customer),
             'unreadTickets' => $this->unreadTicketsCount($customer),
         ]);
     }
 
-    public function activeTickets(Request $request): JsonResponse
+    public function activeTickets(Request $request, SettingsService $settings): JsonResponse
     {
         $customer = $request->user('customer');
         $activeTicketsQuery = $this->activeTicketsQuery($customer);
-        $activeTickets = (clone $activeTicketsQuery)->limit(8)->get();
+        $activeTickets = (clone $activeTicketsQuery)->limit($settings->portalActiveTicketLimit())->get();
 
         return response()->json([
             'html' => view('portal.partials.active-ticket-list', compact('activeTickets'))->render(),

@@ -304,10 +304,12 @@ class TaskManagementTest extends TestCase
 
         $this->actingAs($this->member)->get('/dashboard')
             ->assertOk()
-            ->assertSeeInOrder(['تسک‌های امروز من', '1', 'عقب‌افتاده من', '1', 'در حال انجام من', '1'])
+            ->assertSee('data-testid="dashboard-task-today" data-count="1"', false)
+            ->assertSee('data-testid="dashboard-task-overdue" data-count="1"', false)
+            ->assertSee('data-testid="dashboard-task-in-progress" data-count="1"', false)
             ->assertSee('امروز خودم')
             ->assertDontSee('امروز دیگری')
-            ->assertDontSee('کل تسک‌های باز');
+            ->assertDontSee('data-testid="dashboard-task-team-open"', false);
     }
 
     public function test_dashboard_view_all_metrics_include_team_data(): void
@@ -319,7 +321,9 @@ class TaskManagementTest extends TestCase
         ]);
 
         $this->actingAs($this->manager)->get('/dashboard')
-            ->assertOk()->assertSee('کل تسک‌های باز')->assertSee('عقب‌افتاده تیم');
+            ->assertOk()
+            ->assertSee('data-testid="dashboard-task-team-open" data-count="2"', false)
+            ->assertSee('data-testid="dashboard-task-team-overdue" data-count="1"', false);
     }
 
     private function payload(array $overrides = []): array

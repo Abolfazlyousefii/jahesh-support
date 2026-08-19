@@ -89,7 +89,7 @@
 
                 <aside class="portal-bank-column">
                     <div class="portal-bank-title">
-                        <strong>حساب‌های بانکی جهش</strong>
+                        <strong>حساب‌های بانکی {{ $generalSettings['general.company_name'] ?? 'تیم جهش' }}</strong>
                         <span>اطلاعات مقصد پرداخت</span>
                     </div>
                     @foreach($bankAccounts as $account)

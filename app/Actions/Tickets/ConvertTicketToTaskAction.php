@@ -8,6 +8,8 @@ use App\Enums\TicketMessageType;
 use App\Models\Task;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\Activity\ActivityLogger;
+use App\Services\Notifications\InAppNotifier;
 use App\Services\Sms\SmsNotifier;
 use App\Support\TaskStatusManager;
 use App\Support\TicketWorkflow;
@@ -21,10 +23,14 @@ class ConvertTicketToTaskAction
         private readonly TaskStatusManager $taskStatuses,
         private readonly TicketWorkflow $ticketWorkflow,
         private readonly SmsNotifier $sms,
+        private readonly InAppNotifier $notifications,
+        private readonly ActivityLogger $activity,
     ) {}
 
     public function execute(User $actor, Ticket $ticket, array $data): Task
     {
+        $beforeTicketStatus = $ticket->status;
+
         $task = DB::transaction(function () use ($actor, $ticket, $data) {
             $lockedTicket = Ticket::query()->lockForUpdate()->findOrFail($ticket->id);
             if ($lockedTicket->task()->withTrashed()->exists()) {
@@ -54,7 +60,42 @@ class ConvertTicketToTaskAction
             return $task;
         });
 
+        $ticket->refresh();
+
+        $this->activity->record(
+            'ticket.converted_to_task',
+            $ticket,
+            $actor,
+            'تیکت به تسک اجرایی تبدیل شد.',
+            new: ['task_id' => $task->id],
+            metadata: ['task_id' => $task->id],
+        );
+
+        $this->activity->record(
+            'task.created',
+            $task,
+            $actor,
+            'تسک از روی تیکت ایجاد شد.',
+            new: $this->activity->snapshot($task, [
+                'title', 'customer_id', 'assignee_id', 'priority', 'status', 'start_date', 'due_date',
+            ]),
+            metadata: ['source_ticket_id' => $ticket->id],
+        );
+
+        if ($beforeTicketStatus !== $ticket->status) {
+            $this->activity->record(
+                'ticket.status_changed',
+                $ticket,
+                $actor,
+                'وضعیت تیکت پس از تبدیل به تسک تغییر کرد.',
+                ['status' => $beforeTicketStatus],
+                ['status' => $ticket->status],
+                ['task_id' => $task->id, 'source' => 'task_conversion'],
+            );
+        }
+
         $this->sms->taskAssigned($task, $actor);
+        $this->notifications->taskAssigned($task, $actor);
 
         return $task;
     }

@@ -3,7 +3,7 @@
         <div>
             <span class="portal-eyebrow">پروفایل مشتری</span>
             <h1>حساب من</h1>
-            <p>اطلاعاتی که برای حساب شما در سامانه جهش ثبت شده است.</p>
+            <p>اطلاعاتی که برای حساب شما در {{ $generalSettings['general.app_name'] ?? 'سامانه پشتیبانی جهش' }} ثبت شده است.</p>
         </div>
     </section>
 
@@ -12,7 +12,7 @@
         <div class="portal-profile-name">
             <span>حساب فعال</span>
             <h2>{{ $customer->name }}</h2>
-            <p>{{ $customer->company_name ?: 'مشتری جهش' }}</p>
+            <p>{{ $customer->company_name ?: ($generalSettings['general.company_name'] ?? 'تیم جهش') }}</p>
         </div>
     </section>
 

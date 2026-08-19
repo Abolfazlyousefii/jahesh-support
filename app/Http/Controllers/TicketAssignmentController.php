@@ -13,7 +13,7 @@ class TicketAssignmentController extends Controller
     public function update(AssignTicketRequest $request, Ticket $ticket, AssignTicketAction $action): RedirectResponse
     {
         Gate::authorize('assign', $ticket);
-        $action->execute($ticket, $request->integer('assignee_id'));
+        $action->execute($ticket, $request->integer('assignee_id'), $request->user());
 
         return back()->with('success', 'مسئول تیکت تغییر کرد.');
     }

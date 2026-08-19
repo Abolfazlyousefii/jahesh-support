@@ -49,6 +49,8 @@ class RolesAndPermissionsSeeder extends Seeder
             ['name' => 'finance.review_payments', 'title' => 'بررسی و تأیید فیش‌های پرداخت', 'group' => 'مالی'],
             ['name' => 'finance.manage_bank_accounts', 'title' => 'مدیریت حساب‌های بانکی', 'group' => 'مالی'],
             ['name' => 'settings.sms.manage', 'title' => 'مدیریت تنظیمات پیامک', 'group' => 'تنظیمات'],
+            ['name' => 'settings.general.manage', 'title' => 'مدیریت تنظیمات عمومی', 'group' => 'تنظیمات'],
+            ['name' => 'activity.view', 'title' => 'مشاهده گزارش فعالیت‌ها', 'group' => 'گزارش فعالیت‌ها'],
         ];
 
         foreach ($permissions as $permission) {

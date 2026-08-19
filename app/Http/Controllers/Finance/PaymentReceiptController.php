@@ -7,6 +7,7 @@ use App\Enums\PaymentReceiptStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\RejectPaymentReceiptRequest;
 use App\Models\CustomerPaymentReceipt;
+use App\Services\Settings\SettingsService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,7 +36,7 @@ class PaymentReceiptController extends Controller
                         ->orWhere('company_name', 'like', "%{$search}%"));
             }))
             ->latest()
-            ->paginate(20)
+            ->paginate(app(SettingsService::class)->paginationPerPage())
             ->withQueryString();
 
         return view('finance.receipts.index', [

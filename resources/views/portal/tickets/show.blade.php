@@ -14,7 +14,7 @@
         <section class="portal-card portal-chat-card">
             <div class="portal-chat-head">
                 <div>
-                    <strong>گفتگو با پشتیبانی جهش</strong>
+                    <strong>گفتگو با {{ $generalSettings['portal.title'] ?? 'پشتیبانی جهش' }}</strong>
                     <span>پاسخ‌ها در همین گفتگو ثبت و نگهداری می‌شوند.</span>
                 </div>
             </div>
@@ -24,7 +24,7 @@
                     @php($fromCustomer = $message->author instanceof \App\Models\Customer)
                     <article class="portal-message {{ $fromCustomer ? 'customer' : 'support' }}">
                         <div class="portal-message-meta">
-                            <strong>{{ $fromCustomer ? 'شما' : 'پشتیبانی جهش' }}</strong>
+                            <strong>{{ $fromCustomer ? 'شما' : ($generalSettings['portal.title'] ?? 'پشتیبانی جهش') }}</strong>
                             <time>{{ app(\App\Support\DatePresenter::class)->dateTime($message->created_at) }}</time>
                         </div>
                         <p>{{ $message->body }}</p>

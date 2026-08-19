@@ -2,7 +2,7 @@
     <section class="w-full max-w-sm" x-data="{ mode: @js(old('login_mode', 'password')) }">
         <div class="mb-7 text-center">
             <span class="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-lg bg-brand text-lg font-black text-emerald-950">ج</span>
-            <strong class="text-lg">پشتیبانی جهش</strong>
+            <strong class="text-lg">{{ $generalSettings['portal.title'] ?? 'پشتیبانی جهش' }}</strong>
             <p class="mt-1 text-sm text-gray-500">ورود مشتریان</p>
         </div>
 

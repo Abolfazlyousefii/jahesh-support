@@ -5,6 +5,8 @@ namespace App\Actions\Finance;
 use App\Enums\PaymentReceiptStatus;
 use App\Models\Customer;
 use App\Models\CustomerPaymentReceipt;
+use App\Services\Activity\ActivityLogger;
+use App\Services\Notifications\InAppNotifier;
 use App\Services\Sms\SmsNotifier;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +15,11 @@ use Throwable;
 
 class SubmitPaymentReceiptAction
 {
-    public function __construct(private readonly SmsNotifier $sms) {}
+    public function __construct(
+        private readonly SmsNotifier $sms,
+        private readonly InAppNotifier $notifications,
+        private readonly ActivityLogger $activity,
+    ) {}
 
     public function execute(Customer $customer, array $data, UploadedFile $file): CustomerPaymentReceipt
     {
@@ -38,7 +44,18 @@ class SubmitPaymentReceiptAction
             throw $exception;
         }
 
+        $this->activity->record(
+            'finance.receipt_submitted',
+            $receipt,
+            $customer,
+            'مشتری فیش پرداخت جدید ثبت کرد.',
+            new: $this->activity->snapshot($receipt, [
+                'bank_account_id', 'amount', 'paid_at', 'tracking_code', 'status',
+            ]),
+        );
+
         $this->sms->receiptSubmitted($receipt);
+        $this->notifications->receiptSubmitted($receipt);
 
         return $receipt;
     }

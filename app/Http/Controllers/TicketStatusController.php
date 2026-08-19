@@ -14,7 +14,7 @@ class TicketStatusController extends Controller
     public function update(UpdateTicketStatusRequest $request, Ticket $ticket, UpdateTicketStatusAction $action): RedirectResponse
     {
         Gate::authorize('updateStatus', $ticket);
-        $action->execute($ticket, TicketStatus::from($request->validated('status')));
+        $action->execute($ticket, TicketStatus::from($request->validated('status')), $request->user());
 
         return back()->with('success', 'وضعیت تیکت تغییر کرد.');
     }

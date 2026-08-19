@@ -12,12 +12,14 @@ use App\Policies\TicketPolicy;
 use App\Services\Otp\LogOtpSender;
 use App\Services\Sms\SmartOtpSender;
 use App\Services\Sms\SmartPasswordResetOtpSender;
+use App\Services\Settings\SettingsService;
 use App\Support\DatePresenter;
 use App\Support\PhoneNormalizer;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(DatePresenter::class);
+        $this->app->singleton(SettingsService::class);
 
         $this->app->bind(OtpSender::class, function ($app) {
             $driver = (string) config('jahesh.otp.driver', 'auto');
@@ -51,6 +54,10 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(Task::class, TaskPolicy::class);
         Gate::policy(Ticket::class, TicketPolicy::class);
+
+        View::composer('*', function ($view): void {
+            $view->with('generalSettings', app(SettingsService::class)->all());
+        });
 
         RateLimiter::for('customer-otp-request', fn (Request $request) => Limit::perMinutes(5, 3)->by(
             PhoneNormalizer::normalize($request->string('phone')->toString()).'|'.$request->ip(),

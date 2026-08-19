@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Portal\StoreCustomerTicketRequest;
 use App\Models\Ticket;
 use App\Support\TicketWorkflow;
+use App\Services\Settings\SettingsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -32,7 +33,7 @@ class PortalTicketController extends Controller
             ->with('latestPublicMessage.author')
             ->orderByRaw('CASE WHEN last_staff_message_at IS NOT NULL AND (customer_last_read_at IS NULL OR last_staff_message_at > customer_last_read_at) THEN 0 ELSE 1 END')
             ->latest('updated_at')
-            ->paginate(15);
+            ->paginate(app(SettingsService::class)->paginationPerPage());
 
         $activeStatuses = [
             TicketStatus::New,

@@ -7,8 +7,10 @@ use App\Enums\TicketStatus;
 use App\Models\Customer;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\Activity\ActivityLogger;
 use App\Support\PhoneNormalizer;
 use App\Support\TicketWorkflow;
+use App\Services\Settings\SettingsService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
@@ -73,7 +75,7 @@ class TicketController extends Controller
             ->orderByRaw('CASE WHEN last_customer_message_at IS NOT NULL AND (assignee_last_read_at IS NULL OR last_customer_message_at > assignee_last_read_at) THEN 0 ELSE 1 END')
             ->orderByRaw("CASE priority WHEN 'urgent' THEN 1 WHEN 'important' THEN 2 ELSE 3 END")
             ->latest('updated_at')
-            ->paginate(20)
+            ->paginate(app(SettingsService::class)->paginationPerPage())
             ->withQueryString();
 
         return view('tickets.index', [
@@ -109,9 +111,18 @@ class TicketController extends Controller
         ]);
     }
 
-    public function destroy(Ticket $ticket): RedirectResponse
+    public function destroy(Request $request, Ticket $ticket, ActivityLogger $activity): RedirectResponse
     {
         Gate::authorize('delete', $ticket);
+
+        $activity->record(
+            'ticket.deleted',
+            $ticket,
+            $request->user(),
+            'تیکت حذف شد.',
+            old: $activity->snapshot($ticket, ['subject', 'customer_id', 'assigned_to', 'priority', 'status']),
+        );
+
         $ticket->delete();
 
         return redirect()->route('tickets.index')->with('success', 'تیکت حذف شد.');

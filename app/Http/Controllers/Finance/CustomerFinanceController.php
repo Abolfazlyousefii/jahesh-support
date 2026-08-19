@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Finance\StoreLedgerEntryRequest;
 use App\Models\Customer;
 use App\Services\Finance\CustomerFinanceService;
+use App\Services\Settings\SettingsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -21,7 +22,7 @@ class CustomerFinanceController extends Controller
             ->with(['creator', 'voider', 'paymentReceipt'])
             ->latest('entry_date')
             ->latest('id')
-            ->paginate(20, ['*'], 'ledger_page');
+            ->paginate(app(SettingsService::class)->paginationPerPage(), ['*'], 'ledger_page');
 
         $receipts = $customer->paymentReceipts()
             ->with(['bankAccount', 'reviewer', 'ledgerEntry'])

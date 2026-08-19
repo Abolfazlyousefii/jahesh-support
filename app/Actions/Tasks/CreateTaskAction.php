@@ -5,6 +5,8 @@ namespace App\Actions\Tasks;
 use App\Enums\TaskStatus;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\Activity\ActivityLogger;
+use App\Services\Notifications\InAppNotifier;
 use App\Services\Sms\SmsNotifier;
 use App\Support\TaskStatusManager;
 
@@ -13,6 +15,8 @@ class CreateTaskAction
     public function __construct(
         private readonly TaskStatusManager $statuses,
         private readonly SmsNotifier $sms,
+        private readonly InAppNotifier $notifications,
+        private readonly ActivityLogger $activity,
     ) {}
 
     public function execute(User $actor, array $data): Task
@@ -32,7 +36,18 @@ class CreateTaskAction
             ...$this->statuses->attributes($status),
         ]);
 
+        $this->activity->record(
+            'task.created',
+            $task,
+            $actor,
+            'تسک جدید ایجاد شد.',
+            new: $this->activity->snapshot($task, [
+                'title', 'description', 'customer_id', 'assignee_id', 'priority', 'status', 'start_date', 'due_date',
+            ]),
+        );
+
         $this->sms->taskAssigned($task, $actor);
+        $this->notifications->taskAssigned($task, $actor);
 
         return $task;
     }
