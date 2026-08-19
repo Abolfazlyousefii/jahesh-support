@@ -6,13 +6,16 @@ use App\Enums\TicketMessageType;
 use App\Enums\TicketStatus;
 use App\Models\Customer;
 use App\Models\Ticket;
+use App\Services\Sms\SmsNotifier;
 use Illuminate\Support\Facades\DB;
 
 class CreateTicketAction
 {
+    public function __construct(private readonly SmsNotifier $sms) {}
+
     public function execute(Customer $customer, array $data): Ticket
     {
-        return DB::transaction(function () use ($customer, $data) {
+        $ticket = DB::transaction(function () use ($customer, $data) {
             $now = now();
 
             $ticket = Ticket::query()->create([
@@ -35,5 +38,9 @@ class CreateTicketAction
 
             return $ticket;
         });
+
+        $this->sms->ticketCreated($ticket);
+
+        return $ticket;
     }
 }

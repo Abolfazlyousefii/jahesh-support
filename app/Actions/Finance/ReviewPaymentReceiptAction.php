@@ -7,14 +7,17 @@ use App\Enums\PaymentReceiptStatus;
 use App\Models\CustomerLedgerEntry;
 use App\Models\CustomerPaymentReceipt;
 use App\Models\User;
+use App\Services\Sms\SmsNotifier;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ReviewPaymentReceiptAction
 {
+    public function __construct(private readonly SmsNotifier $sms) {}
+
     public function approve(CustomerPaymentReceipt $receipt, User $actor): CustomerPaymentReceipt
     {
-        return DB::transaction(function () use ($receipt, $actor) {
+        $receipt = DB::transaction(function () use ($receipt, $actor) {
             $locked = CustomerPaymentReceipt::query()->lockForUpdate()->findOrFail($receipt->id);
 
             $this->ensurePending($locked);
@@ -42,11 +45,15 @@ class ReviewPaymentReceiptAction
 
             return $locked->refresh();
         });
+
+        $this->sms->receiptApproved($receipt);
+
+        return $receipt;
     }
 
     public function reject(CustomerPaymentReceipt $receipt, User $actor, string $reason): CustomerPaymentReceipt
     {
-        return DB::transaction(function () use ($receipt, $actor, $reason) {
+        $receipt = DB::transaction(function () use ($receipt, $actor, $reason) {
             $locked = CustomerPaymentReceipt::query()->lockForUpdate()->findOrFail($receipt->id);
 
             $this->ensurePending($locked);
@@ -60,6 +67,10 @@ class ReviewPaymentReceiptAction
 
             return $locked->refresh();
         });
+
+        $this->sms->receiptRejected($receipt);
+
+        return $receipt;
     }
 
     private function ensurePending(CustomerPaymentReceipt $receipt): void

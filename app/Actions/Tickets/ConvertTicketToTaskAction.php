@@ -8,6 +8,7 @@ use App\Enums\TicketMessageType;
 use App\Models\Task;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\Sms\SmsNotifier;
 use App\Support\TaskStatusManager;
 use App\Support\TicketWorkflow;
 use Illuminate\Support\Facades\DB;
@@ -19,11 +20,12 @@ class ConvertTicketToTaskAction
     public function __construct(
         private readonly TaskStatusManager $taskStatuses,
         private readonly TicketWorkflow $ticketWorkflow,
+        private readonly SmsNotifier $sms,
     ) {}
 
     public function execute(User $actor, Ticket $ticket, array $data): Task
     {
-        return DB::transaction(function () use ($actor, $ticket, $data) {
+        $task = DB::transaction(function () use ($actor, $ticket, $data) {
             $lockedTicket = Ticket::query()->lockForUpdate()->findOrFail($ticket->id);
             if ($lockedTicket->task()->withTrashed()->exists()) {
                 throw ValidationException::withMessages(['ticket' => 'این تیکت قبلاً به تسک تبدیل شده است.']);
@@ -47,10 +49,13 @@ class ConvertTicketToTaskAction
                 ...$this->taskStatuses->attributes(TaskStatus::New),
             ]);
 
-            // از لحظه ساخت تسک، درخواست وارد فاز اجرا می‌شود.
             $this->ticketWorkflow->afterTaskCreated($lockedTicket);
 
             return $task;
         });
+
+        $this->sms->taskAssigned($task, $actor);
+
+        return $task;
     }
 }

@@ -8,12 +8,16 @@ use App\Models\Customer;
 use App\Models\Ticket;
 use App\Models\TicketMessage;
 use App\Models\User;
+use App\Services\Sms\SmsNotifier;
 use App\Support\TicketWorkflow;
 use Illuminate\Support\Facades\DB;
 
 class ReplyToTicketAction
 {
-    public function __construct(private readonly TicketWorkflow $workflow) {}
+    public function __construct(
+        private readonly TicketWorkflow $workflow,
+        private readonly SmsNotifier $sms,
+    ) {}
 
     public function execute(
         Ticket $ticket,
@@ -22,7 +26,7 @@ class ReplyToTicketAction
         TicketMessageType $type,
         ?TicketStatus $statusAfterReply = null,
     ): TicketMessage {
-        return DB::transaction(function () use ($ticket, $author, $body, $type, $statusAfterReply) {
+        $message = DB::transaction(function () use ($ticket, $author, $body, $type, $statusAfterReply) {
             $this->workflow->ensureWritable($ticket);
 
             $message = $ticket->messages()->create([
@@ -42,5 +46,19 @@ class ReplyToTicketAction
 
             return $message;
         });
+
+        $ticket->refresh();
+
+        if ($type === TicketMessageType::Public) {
+            if ($author instanceof Customer) {
+                $this->sms->ticketCustomerReply($ticket);
+            } elseif ($statusAfterReply === TicketStatus::Resolved) {
+                $this->sms->ticketResolved($ticket);
+            } else {
+                $this->sms->ticketStaffReply($ticket);
+            }
+        }
+
+        return $message;
     }
 }

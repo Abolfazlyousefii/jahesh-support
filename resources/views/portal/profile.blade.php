@@ -30,15 +30,61 @@
             </dl>
         </section>
 
-        <aside class="portal-card portal-security-card">
+        <aside class="portal-card portal-security-card" x-data="{ showCurrent: false, showPassword: false, showConfirmation: false, password: '', confirmation: '' }">
             <span class="portal-stat-icon"><x-icon name="shield" /></span>
             <h2>امنیت حساب</h2>
-            <p>ورود به حساب شما با شماره موبایل ثبت‌شده انجام می‌شود.</p>
+            <p>رمز عبور حساب را بدون نیاز به پشتیبانی تغییر دهید.</p>
+
             <div class="portal-security-status">
                 <span>رمز عبور</span>
                 <strong>{{ filled($customer->password) ? 'فعال' : 'تعریف نشده' }}</strong>
             </div>
-            <div class="portal-soft-note">برای تغییر اطلاعات اصلی حساب یا رمز عبور می‌توانید با تیم پشتیبانی جهش در ارتباط باشید.</div>
+
+            <form method="POST" action="{{ route('portal.profile.password.update') }}" class="mt-5 space-y-4">
+                @csrf
+                @method('PUT')
+
+                @if(filled($customer->password))
+                    <div>
+                        <label for="profile-current-password" class="form-label">رمز عبور فعلی</label>
+                        <div class="relative">
+                            <input id="profile-current-password" name="current_password" :type="showCurrent ? 'text' : 'password'" class="form-control pl-12" autocomplete="current-password" required>
+                            <button type="button" @click="showCurrent = !showCurrent" class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500" x-text="showCurrent ? 'مخفی' : 'نمایش'"></button>
+                        </div>
+                        @error('current_password')<p class="form-error">{{ $message }}</p>@enderror
+                    </div>
+                @endif
+
+                <div>
+                    <label for="profile-new-password" class="form-label">{{ filled($customer->password) ? 'رمز عبور جدید' : 'تعریف رمز عبور' }}</label>
+                    <div class="relative">
+                        <input id="profile-new-password" name="password" x-model="password" :type="showPassword ? 'text' : 'password'" class="form-control pl-12" autocomplete="new-password" required>
+                        <button type="button" @click="showPassword = !showPassword" class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500" x-text="showPassword ? 'مخفی' : 'نمایش'"></button>
+                    </div>
+                    @error('password')<p class="form-error">{{ $message }}</p>@enderror
+                </div>
+
+                <div>
+                    <label for="profile-new-password-confirmation" class="form-label">تکرار رمز عبور جدید</label>
+                    <div class="relative">
+                        <input id="profile-new-password-confirmation" name="password_confirmation" x-model="confirmation" :type="showConfirmation ? 'text' : 'password'" class="form-control pl-12" autocomplete="new-password" required>
+                        <button type="button" @click="showConfirmation = !showConfirmation" class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500" x-text="showConfirmation ? 'مخفی' : 'نمایش'"></button>
+                    </div>
+                </div>
+
+                <div class="portal-soft-note">
+                    <div class="grid gap-1">
+                        <span :class="password.length >= 8 ? 'text-emerald-700' : ''">✓ حداقل ۸ کاراکتر</span>
+                        <span :class="/[A-Z]/.test(password) ? 'text-emerald-700' : ''">✓ یک حرف بزرگ انگلیسی</span>
+                        <span :class="/[0-9]/.test(password) ? 'text-emerald-700' : ''">✓ حداقل یک عدد</span>
+                        <span :class="confirmation.length > 0 && confirmation === password ? 'text-emerald-700' : ''">✓ تکرار رمز یکسان</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="portal-primary-button w-full justify-center">
+                    {{ filled($customer->password) ? 'تغییر رمز عبور' : 'تعریف رمز عبور' }}
+                </button>
+            </form>
         </aside>
     </div>
 </x-layouts.portal>

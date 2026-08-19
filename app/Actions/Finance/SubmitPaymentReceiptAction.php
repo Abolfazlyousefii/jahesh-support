@@ -5,6 +5,7 @@ namespace App\Actions\Finance;
 use App\Enums\PaymentReceiptStatus;
 use App\Models\Customer;
 use App\Models\CustomerPaymentReceipt;
+use App\Services\Sms\SmsNotifier;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -12,14 +13,15 @@ use Throwable;
 
 class SubmitPaymentReceiptAction
 {
-    /** @param array<string,mixed> $data */
+    public function __construct(private readonly SmsNotifier $sms) {}
+
     public function execute(Customer $customer, array $data, UploadedFile $file): CustomerPaymentReceipt
     {
         $directory = 'finance/receipts/'.$customer->id.'/'.now()->format('Y/m');
         $path = $file->store($directory, 'local');
 
         try {
-            return DB::transaction(fn () => CustomerPaymentReceipt::query()->create([
+            $receipt = DB::transaction(fn () => CustomerPaymentReceipt::query()->create([
                 'customer_id' => $customer->id,
                 'bank_account_id' => $data['bank_account_id'],
                 'amount' => $data['amount'],
@@ -35,5 +37,9 @@ class SubmitPaymentReceiptAction
             Storage::disk('local')->delete($path);
             throw $exception;
         }
+
+        $this->sms->receiptSubmitted($receipt);
+
+        return $receipt;
     }
 }

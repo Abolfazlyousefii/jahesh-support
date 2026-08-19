@@ -35,6 +35,11 @@
                     <input id="customer-password" name="password" type="password" class="form-control" autocomplete="current-password" required>
                     @error('password')<p class="form-error">{{ $message }}</p>@enderror
                 </div>
+                <div class="-mt-1 flex justify-end">
+                    <a href="{{ route('portal.password.forgot') }}" class="text-xs font-bold text-emerald-700 transition hover:text-emerald-800">
+                        رمز عبور را فراموش کرده‌ام
+                    </a>
+                </div>
                 <x-button class="w-full">ورود به پنل</x-button>
             </form>
 

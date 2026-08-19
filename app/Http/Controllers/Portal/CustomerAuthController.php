@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Throwable;
 
 class CustomerAuthController extends Controller
 {
@@ -55,7 +56,15 @@ class CustomerAuthController extends Controller
     public function requestCode(RequestCustomerOtpRequest $request, RequestCustomerOtpAction $action): RedirectResponse
     {
         $phone = $request->validated('phone');
-        $action->execute($phone, $request->ip());
+
+        try {
+            $action->execute($phone, $request->ip());
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors(['phone' => 'ارسال کد ورود موقتاً امکان‌پذیر نیست. لطفاً دوباره تلاش کنید یا با رمز عبور وارد شوید.']);
+        }
+
         $request->session()->put('customer_login_phone', $phone);
 
         return redirect()->route('portal.verify')->with('status', 'اگر این شماره در سامانه ثبت شده باشد، کد ورود ارسال می‌شود.');
@@ -95,7 +104,13 @@ class CustomerAuthController extends Controller
             return redirect()->route('portal.login');
         }
 
-        $action->execute($phone, $request->ip());
+        try {
+            $action->execute($phone, $request->ip());
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->withErrors(['code' => 'ارسال مجدد کد موقتاً امکان‌پذیر نیست.']);
+        }
 
         return back()->with('status', 'در صورت امکان، کد ورود دوباره ارسال شد.');
     }

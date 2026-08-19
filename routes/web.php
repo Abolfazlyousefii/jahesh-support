@@ -10,6 +10,8 @@ use App\Http\Controllers\Finance\LedgerEntryController;
 use App\Http\Controllers\Finance\PaymentReceiptController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Portal\CustomerAuthController;
+use App\Http\Controllers\Portal\CustomerPasswordResetController;
+use App\Http\Controllers\Portal\PortalPasswordController;
 use App\Http\Controllers\Portal\PortalDashboardController;
 use App\Http\Controllers\Portal\PortalProfileController;
 use App\Http\Controllers\Portal\PortalFinanceController;
@@ -17,6 +19,7 @@ use App\Http\Controllers\Portal\PortalPaymentReceiptController;
 use App\Http\Controllers\Portal\PortalTicketController;
 use App\Http\Controllers\Portal\PortalTicketReplyController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\Settings\SmsSettingsController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TicketAssignmentController;
@@ -41,12 +44,20 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::get('/verify', [CustomerAuthController::class, 'verification'])->name('verify');
         Route::post('/verify', [CustomerAuthController::class, 'verify'])->middleware('throttle:customer-otp-verify')->name('verify.store');
         Route::post('/resend', [CustomerAuthController::class, 'resend'])->middleware('throttle:customer-otp-request')->name('resend');
+        Route::get('/forgot-password', [CustomerPasswordResetController::class, 'create'])->name('password.forgot');
+        Route::post('/forgot-password', [CustomerPasswordResetController::class, 'requestCode'])->middleware('throttle:customer-password-reset-request')->name('password.request');
+        Route::get('/forgot-password/verify', [CustomerPasswordResetController::class, 'verification'])->name('password.verify');
+        Route::post('/forgot-password/verify', [CustomerPasswordResetController::class, 'verify'])->middleware('throttle:customer-password-reset-verify')->name('password.verify.store');
+        Route::post('/forgot-password/resend', [CustomerPasswordResetController::class, 'resend'])->middleware('throttle:customer-password-reset-request')->name('password.resend');
+        Route::get('/forgot-password/reset', [CustomerPasswordResetController::class, 'resetForm'])->name('password.reset');
+        Route::post('/forgot-password/reset', [CustomerPasswordResetController::class, 'reset'])->name('password.update');
     });
 
     Route::middleware(['customer.auth', 'customer.active'])->group(function () {
         Route::get('/', PortalDashboardController::class)->name('dashboard');
         Route::get('/dashboard/active-tickets', [PortalDashboardController::class, 'activeTickets'])->name('dashboard.active-tickets');
         Route::get('/profile', PortalProfileController::class)->name('profile');
+        Route::put('/profile/password', [PortalPasswordController::class, 'update'])->middleware('throttle:6,1')->name('profile.password.update');
         Route::get('/finance', PortalFinanceController::class)->name('finance.index');
         Route::post('/finance/receipts', [PortalPaymentReceiptController::class, 'store'])->name('finance.receipts.store');
         Route::get('/finance/receipts/{receipt}/file', [PortalPaymentReceiptController::class, 'file'])->name('finance.receipts.file');
@@ -121,6 +132,14 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/{user}/edit', [TeamController::class, 'edit'])->middleware('can:team.update')->name('edit');
         Route::put('/{user}', [TeamController::class, 'update'])->middleware('can:team.update')->name('update');
         Route::delete('/{user}', [TeamController::class, 'destroy'])->middleware('can:team.delete')->name('destroy');
+    });
+
+
+    Route::prefix('settings')->name('settings.')->middleware('can:settings.sms.manage')->group(function () {
+        Route::get('/sms', [SmsSettingsController::class, 'index'])->name('sms.index');
+        Route::put('/sms', [SmsSettingsController::class, 'update'])->name('sms.update');
+        Route::post('/sms/test-connection', [SmsSettingsController::class, 'testConnection'])->name('sms.test-connection');
+        Route::post('/sms/test-pattern', [SmsSettingsController::class, 'testPattern'])->name('sms.test-pattern');
     });
 
     Route::prefix('roles')->name('roles.')->group(function () {
