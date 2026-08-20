@@ -4,7 +4,7 @@
 @endphp
 
 <article
-    class="group rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition duration-150 hover:border-gray-300 hover:shadow"
+    class="group rounded-lg border border-gray-200 bg-white p-3 transition duration-150 hover:border-gray-300 hover:bg-gray-50/40"
     data-task-card="{{ $task->id }}"
     data-task-status="{{ $task->status->value }}"
     data-board-mode="{{ $mode }}"

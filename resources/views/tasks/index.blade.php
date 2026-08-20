@@ -278,7 +278,7 @@
 
             {{-- مقصدهای ثانویه هنگام درگ در دسکتاپ --}}
             <template x-if="dragging">
-                <div class="fixed bottom-6 left-1/2 z-40 hidden w-[min(720px,calc(100vw-2rem))] -translate-x-1/2 grid-cols-3 gap-2 rounded-2xl border border-gray-200 bg-white/95 p-2.5 shadow-xl backdrop-blur md:grid">
+                <div class="fixed bottom-6 left-1/2 z-40 hidden w-[min(720px,calc(100vw-2rem))] -translate-x-1/2 grid-cols-3 gap-2 rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm md:grid">
                     @foreach($secondaryStatuses as $secondaryStatus)
                         <div
                             class="flex min-h-14 items-center justify-center rounded-xl border border-dashed px-3 text-sm font-bold transition {{ match($secondaryStatus->value) {
@@ -317,7 +317,7 @@
                 >
                     <div
                         x-transition
-                        class="max-h-[90vh] w-full overflow-y-auto rounded-t-2xl bg-white p-4 shadow-2xl sm:max-w-lg sm:rounded-2xl sm:p-5"
+                        class="max-h-[90vh] w-full overflow-y-auto rounded-t-lg bg-white p-4 shadow-sm sm:max-w-lg sm:rounded-lg sm:p-5"
                     >
                         <div class="mb-4 flex items-start justify-between gap-3">
                             <div>
@@ -499,11 +499,11 @@
 
                             event.dataTransfer.effectAllowed = 'move';
                             event.dataTransfer.setData('text/plain', String(taskId));
-                            card.classList.add('opacity-60', 'scale-[0.99]');
+                            card.classList.add('opacity-60');
                         },
 
                         endDrag(event) {
-                            event.currentTarget?.classList.remove('opacity-60', 'scale-[0.99]');
+                            event.currentTarget?.classList.remove('opacity-60');
                             this.dragArmed = null;
 
                             window.setTimeout(() => {
@@ -797,8 +797,8 @@
                     </x-slot:action>
                 </x-empty-state>
             @else
-                <div class="hidden overflow-x-auto md:block">
-                    <table class="w-full min-w-[950px] text-right">
+                <div class="ui-table-wrap hidden md:block">
+                    <table class="ui-table min-w-[950px]">
                         <thead class="bg-gray-50 text-xs text-gray-500">
                             <tr>
                                 <th class="p-4">عنوان</th>

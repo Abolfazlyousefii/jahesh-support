@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#F4F6F8">
     <title>{{ $title ?? 'پنل مشتری' }} | {{ $generalSettings['general.app_name'] ?? 'سامانه پشتیبانی جهش' }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

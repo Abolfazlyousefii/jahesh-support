@@ -86,8 +86,8 @@
                 @endforeach
             </div>
 
-            <div class="hidden overflow-x-auto lg:block">
-                <table class="w-full min-w-[900px] text-right">
+            <div class="ui-table-wrap hidden lg:block">
+                <table class="ui-table min-w-[900px]">
                     <thead class="bg-gray-50 text-xs text-gray-500">
                         <tr>
                             <th class="p-4">زمان</th>

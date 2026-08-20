@@ -43,6 +43,6 @@
     </div>
 
     @can('delete', $task)
-        <div class="mt-6 border-t border-gray-200 pt-5"><form method="POST" action="{{ route('tasks.destroy', $task) }}" onsubmit="return confirm('این تسک حذف شود؟')">@csrf @method('DELETE')<x-button variant="danger">حذف تسک</x-button></form></div>
+        <div class="mt-6 border-t border-gray-200 pt-5"><form method="POST" action="{{ route('tasks.destroy', $task) }}" data-confirm="این تسک حذف شود؟">@csrf @method('DELETE')<x-button variant="danger">حذف تسک</x-button></form></div>
     @endcan
 </x-layouts.app>

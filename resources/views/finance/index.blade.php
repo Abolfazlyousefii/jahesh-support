@@ -52,8 +52,8 @@
             </div>
         </form>
 
-        <div class="hidden overflow-x-auto md:block">
-            <table class="w-full min-w-[820px] text-right text-sm">
+        <div class="ui-table-wrap hidden md:block">
+            <table class="ui-table min-w-[820px]">
                 <thead class="bg-gray-50 text-xs text-gray-500">
                     <tr><th class="px-5 py-3">مشتری</th><th class="px-4 py-3">بدهکار</th><th class="px-4 py-3">بستانکار</th><th class="px-4 py-3">مانده</th><th class="px-4 py-3">فیش معلق</th><th class="px-5 py-3"></th></tr>
                 </thead>

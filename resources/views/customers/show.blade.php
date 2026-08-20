@@ -53,7 +53,7 @@
 
     @can('customers.delete')
         <div class="mt-6 border-t border-gray-200 pt-5">
-            <form method="POST" action="{{ route('customers.destroy', $customer) }}" onsubmit="return confirm('این مشتری حذف شود؟ این عملیات به‌صورت حذف نرم انجام می‌شود.')">
+            <form method="POST" action="{{ route('customers.destroy', $customer) }}" data-confirm="این مشتری حذف شود؟ این عملیات به‌صورت حذف نرم انجام می‌شود.">
                 @csrf @method('DELETE')
                 <x-button variant="danger">حذف مشتری</x-button>
             </form>

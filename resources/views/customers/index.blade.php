@@ -1,7 +1,7 @@
 <x-layouts.app title="مشتریان">
     <x-page-header title="مشتریان" description="مدیریت اطلاعات و شماره‌های تماس مشتریان">
         <x-slot:actions>
-            @can('customers.create')<a href="{{ route('customers.create') }}" class="btn btn-primary">افزودن مشتری</a>@endcan
+            @can('customers.create')<a href="{{ route('customers.create') }}" class="btn btn-primary"><x-icon name="plus" class="h-4 w-4" />افزودن مشتری</a>@endcan
         </x-slot:actions>
     </x-page-header>
 
@@ -29,8 +29,8 @@
                 </x-slot:action>
             </x-empty-state>
         @else
-            <div class="hidden overflow-x-auto md:block">
-                <table class="w-full min-w-[900px] text-right">
+            <div class="ui-table-wrap hidden md:block">
+                <table class="ui-table min-w-[900px]">
                     <thead class="bg-gray-50 text-xs text-gray-500"><tr><th class="p-4">نام مشتری</th><th class="p-4">مجموعه</th><th class="p-4">شماره اصلی</th><th class="p-4">شهر</th><th class="p-4">وضعیت</th><th class="p-4">تاریخ ثبت</th><th class="p-4">عملیات</th></tr></thead>
                     <tbody class="divide-y divide-gray-100">
                         @foreach($customers as $customer)
@@ -41,7 +41,7 @@
                                 <td class="p-4 text-gray-600">{{ $customer->city ?: '—' }}</td>
                                 <td class="p-4"><x-badge :type="$customer->is_active ? 'success' : 'danger'">{{ $customer->is_active ? 'فعال' : 'غیرفعال' }}</x-badge></td>
                                 <td class="p-4">{{ app(\App\Support\DatePresenter::class)->date($customer->created_at) }}</td>
-                                <td class="p-4"><div class="flex gap-2"><a class="btn btn-secondary" href="{{ route('customers.show', $customer) }}">مشاهده</a>@can('customers.update')<a class="btn btn-secondary" href="{{ route('customers.edit', $customer) }}">ویرایش</a>@endcan</div></td>
+                                <td class="p-4"><div class="flex items-center gap-3"><a class="btn btn-text" href="{{ route('customers.show', $customer) }}">مشاهده</a>@can('customers.update')<a class="btn btn-ghost min-h-8 px-2 py-1 text-[10px]" href="{{ route('customers.edit', $customer) }}">ویرایش</a>@endcan</div></td>
                             </tr>
                         @endforeach
                     </tbody>

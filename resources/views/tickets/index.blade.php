@@ -8,15 +8,15 @@
         </div>
     @endcan
 
-    <div class="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-7">
-        <a href="{{ route('tickets.index', request()->except(['quick', 'page'])) }}" class="panel flex min-h-20 items-center justify-between p-3 {{ $quick === null ? 'ring-1 ring-emerald-500' : '' }}">
-            <span class="text-sm font-semibold">همه</span>
-            <span class="text-lg font-bold">{{ $statusCounts->sum() }}</span>
+    <div class="mb-4 flex gap-2 overflow-x-auto pb-1" aria-label="فیلتر وضعیت تیکت‌ها">
+        <a href="{{ route('tickets.index', request()->except(['quick', 'page'])) }}" class="flex min-h-10 shrink-0 items-center gap-2 rounded-lg border px-3 text-[11px] font-semibold {{ $quick === null ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300' }}">
+            <span>همه</span>
+            <b class="numeric rounded-md bg-white px-1.5 py-0.5 text-[10px]">{{ $statusCounts->sum() }}</b>
         </a>
         @foreach($statuses as $item)
-            <a href="{{ route('tickets.index', array_merge(request()->except(['quick', 'page']), ['quick' => $item->value])) }}" class="panel flex min-h-20 items-center justify-between p-3 {{ $quick === $item->value ? 'ring-1 ring-emerald-500' : '' }}">
-                <span class="text-sm font-semibold">{{ $item->label() }}</span>
-                <span class="text-lg font-bold">{{ $statusCounts[$item->value] ?? 0 }}</span>
+            <a href="{{ route('tickets.index', array_merge(request()->except(['quick', 'page']), ['quick' => $item->value])) }}" class="flex min-h-10 shrink-0 items-center gap-2 rounded-lg border px-3 text-[11px] font-semibold {{ $quick === $item->value ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300' }}">
+                <span>{{ $item->label() }}</span>
+                <b class="numeric rounded-md bg-white px-1.5 py-0.5 text-[10px]">{{ $statusCounts[$item->value] ?? 0 }}</b>
             </a>
         @endforeach
     </div>
@@ -68,7 +68,7 @@
                 <div class="divide-y divide-gray-100">
                     @foreach($tickets as $ticket)
                         @php($unread = $ticket->hasUnreadCustomerReply())
-                        <a href="{{ route('tickets.show', $ticket) }}" class="grid grid-cols-[minmax(0,1.8fr)_minmax(150px,.8fr)_130px_150px] items-center gap-4 px-5 py-4 transition hover:bg-gray-50 {{ $unread ? 'bg-emerald-50/40' : '' }}">
+                        <a href="{{ route('tickets.show', $ticket) }}" class="grid grid-cols-[minmax(0,1.65fr)_minmax(130px,.65fr)_minmax(110px,.5fr)_120px_145px] items-center gap-4 px-5 py-4 transition hover:bg-gray-50 {{ $unread ? 'bg-emerald-50/40' : '' }}">
                             <div class="min-w-0">
                                 <div class="flex items-center gap-2">
                                     @if($unread)<span class="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" title="پیام جدید مشتری"></span>@endif
@@ -81,7 +81,11 @@
                             </div>
                             <div class="min-w-0">
                                 <strong class="block truncate text-sm">{{ $ticket->customer->name }}</strong>
-                                <span class="mt-1 block truncate text-xs text-gray-500">{{ $ticket->assignee?->name ?: 'تخصیص‌نیافته' }}</span>
+                                <span class="mt-1 block truncate text-xs text-gray-500">{{ $ticket->customer->company_name ?: 'بدون مجموعه' }}</span>
+                            </div>
+                            <div class="min-w-0">
+                                <span class="block text-[10px] text-gray-400">مسئول</span>
+                                <strong class="mt-1 block truncate text-[11px] font-semibold text-gray-700">{{ $ticket->assignee?->name ?: 'تخصیص‌نیافته' }}</strong>
                             </div>
                             <div class="flex flex-col items-start gap-1.5">
                                 <x-badge :type="$ticket->status->intent()">{{ $ticket->status->label() }}</x-badge>

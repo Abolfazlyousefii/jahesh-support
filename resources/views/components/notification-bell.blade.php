@@ -55,7 +55,7 @@
         x-show="open"
         x-transition.opacity.duration.120ms
         @click.outside="open = false"
-        class="absolute left-0 z-50 mt-2 w-[min(360px,calc(100vw-24px))] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg"
+                            class="absolute left-0 z-50 mt-2 w-[min(360px,calc(100vw-24px))] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg"
     >
         <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3">
             <div>

@@ -32,7 +32,7 @@
                 @can('finance.review_payments')
                     <section class="panel p-5">
                         <h2 class="font-bold">بررسی فیش</h2><p class="mt-2 text-xs leading-5 text-gray-500">تأیید فیش به‌صورت تراکنشی یک سند بستانکار برای مشتری ایجاد می‌کند و دوباره قابل تأیید نیست.</p>
-                        <form method="POST" action="{{ route('finance.receipts.approve', $receipt) }}" class="mt-4">@csrf @method('PATCH')<button class="btn btn-primary w-full" onclick="return confirm('فیش را تأیید می‌کنید؟ سند بستانکار ثبت خواهد شد.')">تأیید و ثبت بستانکار</button></form>
+                        <form method="POST" action="{{ route('finance.receipts.approve', $receipt) }}" class="mt-4" data-confirm="فیش را تأیید می‌کنید؟ سند بستانکار ثبت خواهد شد.">@csrf @method('PATCH')<button class="btn btn-primary w-full">تأیید و ثبت بستانکار</button></form>
                         <form method="POST" action="{{ route('finance.receipts.reject', $receipt) }}" class="mt-3 space-y-3">@csrf @method('PATCH')<div><label class="form-label">دلیل رد</label><textarea name="rejection_reason" rows="3" class="form-control" required>{{ old('rejection_reason') }}</textarea>@error('rejection_reason')<p class="form-error">{{ $message }}</p>@enderror</div><button class="btn btn-danger w-full">رد فیش</button></form>
                     </section>
                 @endcan

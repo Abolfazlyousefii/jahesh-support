@@ -156,8 +156,8 @@
             </div>
         </div>
 
-        <div class="hidden overflow-x-auto md:block">
-            <table class="w-full text-right text-sm">
+        <div class="ui-table-wrap hidden md:block">
+            <table class="ui-table">
                 <thead class="bg-gray-50 text-xs text-gray-500">
                     <tr>
                         <th class="px-4 py-3 font-medium">زمان</th>

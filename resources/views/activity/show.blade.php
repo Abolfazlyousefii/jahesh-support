@@ -29,8 +29,8 @@
                         این رویداد تغییر مقدار قابل مقایسه‌ای نداشته است.
                     </div>
                 @else
-                    <div class="overflow-x-auto rounded-lg border border-gray-100">
-                        <table class="w-full min-w-[620px] text-right">
+                    <div class="ui-table-wrap rounded-lg border border-gray-100">
+                        <table class="ui-table min-w-[620px]">
                             <thead class="bg-gray-50 text-xs text-gray-500">
                                 <tr>
                                     <th class="p-3">فیلد</th>

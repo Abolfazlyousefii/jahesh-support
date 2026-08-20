@@ -155,7 +155,7 @@
         @can('convertToTask', $ticket)
             @if(!$ticket->task)
                 <div x-cloak x-show="convertOpen" class="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-0 sm:items-center sm:p-4" @keydown.escape.window="convertOpen = false">
-                    <div class="w-full max-w-2xl rounded-t-2xl bg-white p-5 sm:rounded-2xl sm:p-6" @click.outside="convertOpen = false">
+                    <div class="w-full max-w-2xl rounded-t-lg bg-white p-5 sm:rounded-lg sm:p-6" @click.outside="convertOpen = false">
                         <div class="mb-5 flex items-start justify-between gap-4">
                             <div><h2 class="text-lg font-bold">تبدیل تیکت به تسک</h2><p class="mt-1 text-sm text-gray-500">تسک به این تیکت متصل می‌ماند و وضعیت تیکت وارد «در حال انجام» می‌شود.</p></div>
                             <button type="button" class="btn btn-secondary" @click="convertOpen = false">بستن</button>
@@ -183,7 +183,7 @@
         @endcan
 
         @can('delete', $ticket)
-            <div class="mt-6 border-t border-gray-200 pt-5"><form method="POST" action="{{ route('tickets.destroy', $ticket) }}" onsubmit="return confirm('این تیکت حذف شود؟')">@csrf @method('DELETE')<x-button variant="danger">حذف تیکت</x-button></form></div>
+            <div class="mt-6 border-t border-gray-200 pt-5"><form method="POST" action="{{ route('tickets.destroy', $ticket) }}" data-confirm="این تیکت حذف شود؟">@csrf @method('DELETE')<x-button variant="danger">حذف تیکت</x-button></form></div>
         @endcan
     </div>
 

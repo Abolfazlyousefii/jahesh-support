@@ -22,8 +22,8 @@
     <section class="panel mt-4 overflow-hidden">
         <div class="flex items-center justify-between border-b border-gray-100 px-4 py-4 sm:px-5"><div><h2 class="font-bold">گردش حساب</h2><p class="mt-1 text-xs text-gray-500">فقط اسناد غیرابطال‌شده در مانده حساب محاسبه می‌شوند.</p></div></div>
 
-        <div class="hidden overflow-x-auto md:block">
-            <table class="w-full min-w-[900px] text-right text-sm">
+        <div class="ui-table-wrap hidden md:block">
+            <table class="ui-table min-w-[900px]">
                 <thead class="bg-gray-50 text-xs text-gray-500"><tr><th class="px-5 py-3">تاریخ</th><th class="px-4 py-3">شرح</th><th class="px-4 py-3">بدهکار</th><th class="px-4 py-3">بستانکار</th><th class="px-4 py-3">مرجع</th><th class="px-5 py-3">ثبت‌کننده / وضعیت</th></tr></thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse($entries as $entry)
@@ -74,7 +74,7 @@
     @can('finance.create_entry')
         <div x-data="{ open: {{ $errors->hasAny(['type','amount','description','reference','entry_date']) ? 'true' : 'false' }} }" @open-finance-entry.window="open=true" x-cloak x-show="open" class="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
             <button type="button" class="absolute inset-0 bg-black/35" @click="open=false" aria-label="بستن"></button>
-            <section class="relative max-h-[90vh] w-full overflow-y-auto rounded-t-2xl bg-white p-5 sm:max-w-xl sm:rounded-2xl sm:p-6">
+            <section class="relative max-h-[90vh] w-full overflow-y-auto rounded-t-lg bg-white p-5 sm:max-w-xl sm:rounded-lg sm:p-6">
                 <div class="mb-5 flex items-center justify-between"><div><h2 class="text-lg font-bold">ثبت سند مالی</h2><p class="mt-1 text-xs text-gray-500">مبالغ بر حسب تومان ثبت می‌شوند.</p></div><button type="button" class="grid h-10 w-10 place-items-center rounded-lg bg-gray-50 text-xl" @click="open=false">×</button></div>
                 <form method="POST" action="{{ route('finance.customers.entries.store', $customer) }}" class="space-y-4">@csrf
                     <div class="grid gap-4 sm:grid-cols-2"><div><label class="form-label">نوع سند</label><select name="type" class="form-control" required>@foreach($entryTypes as $type)<option value="{{ $type->value }}" @selected(old('type') === $type->value)>{{ $type->label() }}</option>@endforeach</select>@error('type')<p class="form-error">{{ $message }}</p>@enderror</div><div><label class="form-label">مبلغ (تومان)</label><input name="amount" value="{{ old('amount') }}" class="form-control" inputmode="numeric" placeholder="مثلاً 15000000" required>@error('amount')<p class="form-error">{{ $message }}</p>@enderror</div></div>
@@ -90,7 +90,7 @@
     @can('finance.void_entry')
         <div x-data="{ open:false, id:null, description:'' }" @open-void-entry.window="open=true; id=$event.detail.id; description=$event.detail.description" x-cloak x-show="open" class="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
             <button type="button" class="absolute inset-0 bg-black/35" @click="open=false"></button>
-            <section class="relative w-full rounded-t-2xl bg-white p-5 sm:max-w-md sm:rounded-2xl sm:p-6">
+            <section class="relative w-full rounded-t-lg bg-white p-5 sm:max-w-md sm:rounded-lg sm:p-6">
                 <h2 class="text-lg font-bold">ابطال سند مالی</h2><p class="mt-2 text-sm text-gray-500">سند حذف نمی‌شود و سابقه ابطال برای حسابرسی باقی می‌ماند.</p><p class="mt-3 rounded-lg bg-gray-50 p-3 text-sm" x-text="description"></p>
                 <form method="POST" :action="'{{ url('/finance/entries') }}/'+id+'/void'" class="mt-4 space-y-4">@csrf @method('PATCH')<div><label class="form-label">دلیل ابطال</label><textarea name="void_reason" rows="3" class="form-control" required></textarea></div><div class="flex gap-2"><button class="btn btn-danger flex-1">تأیید ابطال</button><button type="button" class="btn btn-secondary flex-1" @click="open=false">انصراف</button></div></form>
             </section>

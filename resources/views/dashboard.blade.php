@@ -46,66 +46,21 @@
         {{-- Compact KPI row --}}
         <section class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
             @can('tickets.view')
-                <a href="{{ route('tickets.index') }}" class="rounded-xl border border-gray-200 bg-white px-4 py-3.5 transition hover:border-gray-300">
-                    <div class="flex items-start justify-between gap-3">
-                        <div>
-                            <span class="block text-[10px] font-medium text-gray-500">نیازمند پاسخ</span>
-                            <strong class="mt-2 block text-xl font-bold text-gray-900">{{ number_format($ticketMetrics['needsResponse']) }}</strong>
-                            <span class="mt-1 block text-[9px] text-gray-400">{{ number_format($ticketMetrics['open']) }} تیکت باز</span>
-                        </div>
-                        <span class="mt-1 h-2 w-2 rounded-full bg-amber-500"></span>
-                    </div>
-                </a>
+                <x-stat-card label="نیازمند پاسخ" :value="number_format($ticketMetrics['needsResponse'])" :description="number_format($ticketMetrics['open']).' تیکت باز'" :href="route('tickets.index')" tone="warning" />
             @endcan
 
             @can('tasks.view')
-                <a href="{{ route('tasks.index', ['quick' => 'overdue']) }}" class="rounded-xl border border-gray-200 bg-white px-4 py-3.5 transition hover:border-gray-300">
-                    <div class="flex items-start justify-between gap-3">
-                        <div>
-                            <span class="block text-[10px] font-medium text-gray-500">{{ $canViewAllTasks ? 'تسک‌های معوق تیم' : 'تسک‌های معوق من' }}</span>
-                            <strong class="mt-2 block text-xl font-bold text-gray-900">{{ number_format($canViewAllTasks ? $taskMetrics['teamOverdue'] : $taskMetrics['overdue']) }}</strong>
-                            <span class="mt-1 block text-[9px] text-gray-400">نیازمند پیگیری</span>
-                        </div>
-                        <span class="mt-1 h-2 w-2 rounded-full bg-rose-500"></span>
-                    </div>
-                </a>
+                <x-stat-card :label="$canViewAllTasks ? 'تسک‌های معوق تیم' : 'تسک‌های معوق من'" :value="number_format($canViewAllTasks ? $taskMetrics['teamOverdue'] : $taskMetrics['overdue'])" description="نیازمند پیگیری" :href="route('tasks.index', ['quick' => 'overdue'])" tone="danger" />
             @endcan
 
             @can('finance.view')
-                <a href="{{ route('finance.receipts.index') }}" data-testid="dashboard-finance-pending" data-count="{{ $financeMetrics['pendingReceipts'] }}" class="rounded-xl border border-gray-200 bg-white px-4 py-3.5 transition hover:border-gray-300">
-                    <div class="flex items-start justify-between gap-3">
-                        <div>
-                            <span class="block text-[10px] font-medium text-gray-500">فیش منتظر بررسی</span>
-                            <strong class="mt-2 block text-xl font-bold text-gray-900">{{ number_format($financeMetrics['pendingReceipts']) }}</strong>
-                            <span class="mt-1 block text-[9px] text-gray-400">{{ number_format($financeMetrics['pendingAmount']) }} تومان</span>
-                        </div>
-                        <span class="mt-1 h-2 w-2 rounded-full bg-violet-500"></span>
-                    </div>
-                </a>
+                <x-stat-card label="فیش منتظر بررسی" :value="number_format($financeMetrics['pendingReceipts'])" :description="number_format($financeMetrics['pendingAmount']).' تومان'" :href="route('finance.receipts.index')" tone="violet" data-testid="dashboard-finance-pending" data-count="{{ $financeMetrics['pendingReceipts'] }}" />
             @endcan
 
             @if($canViewAllTickets)
-                <a href="{{ route('tickets.index', ['assignee_id' => 'unassigned']) }}" data-testid="dashboard-ticket-unassigned" data-count="{{ $ticketMetrics['unassigned'] }}" class="rounded-xl border border-gray-200 bg-white px-4 py-3.5 transition hover:border-gray-300">
-                    <div class="flex items-start justify-between gap-3">
-                        <div>
-                            <span class="block text-[10px] font-medium text-gray-500">تیکت بدون مسئول</span>
-                            <strong class="mt-2 block text-xl font-bold text-gray-900">{{ number_format($ticketMetrics['unassigned']) }}</strong>
-                            <span class="mt-1 block text-[9px] text-gray-400">نیازمند تخصیص</span>
-                        </div>
-                        <span class="mt-1 h-2 w-2 rounded-full bg-blue-500"></span>
-                    </div>
-                </a>
+                <x-stat-card label="تیکت بدون مسئول" :value="number_format($ticketMetrics['unassigned'])" description="نیازمند تخصیص" :href="route('tickets.index', ['assignee_id' => 'unassigned'])" tone="info" data-testid="dashboard-ticket-unassigned" data-count="{{ $ticketMetrics['unassigned'] }}" />
             @elseif(auth()->user()->can('customers.view'))
-                <a href="{{ route('customers.index') }}" class="rounded-xl border border-gray-200 bg-white px-4 py-3.5 transition hover:border-gray-300">
-                    <div class="flex items-start justify-between gap-3">
-                        <div>
-                            <span class="block text-[10px] font-medium text-gray-500">مشتریان فعال</span>
-                            <strong class="mt-2 block text-xl font-bold text-gray-900">{{ number_format($activeCustomers) }}</strong>
-                            <span class="mt-1 block text-[9px] text-gray-400">حساب فعال</span>
-                        </div>
-                        <span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span>
-                    </div>
-                </a>
+                <x-stat-card label="مشتریان فعال" :value="number_format($activeCustomers)" description="حساب فعال" :href="route('customers.index')" tone="success" />
             @endif
         </section>
 
