@@ -10,6 +10,7 @@ use App\Services\Activity\ActivityLogger;
 use App\Support\AccessGuard;
 use App\Services\Settings\SettingsService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -34,10 +35,15 @@ class TeamController extends Controller
     {
         $data = $request->safe()->except(['role_ids']);
         $roleIds = $request->user()->can('team.assign_roles') ? $request->validated('role_ids', []) : [];
+        $roleIds = array_map('intval', $roleIds);
         $guard->ensureRolesAssignable($request->user(), $roleIds);
 
-        $user = User::query()->create($data);
-        $user->syncRoles($roleIds);
+        $user = DB::transaction(function () use ($data, $roleIds): User {
+            $user = User::query()->create($data);
+            $user->syncRoles($roleIds);
+
+            return $user;
+        });
 
         $activity->record(
             'team.user_created',
@@ -80,6 +86,7 @@ class TeamController extends Controller
         $roleIds = $request->user()->can('team.assign_roles')
             ? $request->validated('role_ids', [])
             : $user->roles()->pluck('roles.id')->all();
+        $roleIds = array_map('intval', $roleIds);
 
         $guard->ensureUserCanChange($request->user(), $user, $request->boolean('is_active'), $roleIds);
 
@@ -89,8 +96,10 @@ class TeamController extends Controller
             $data['password'] = $request->validated('password');
         }
 
-        $user->update($data);
-        $user->syncRoles($roleIds);
+        DB::transaction(function () use ($user, $data, $roleIds): void {
+            $user->update($data);
+            $user->syncRoles($roleIds);
+        });
         $user->refresh()->load('roles');
 
         $after = [

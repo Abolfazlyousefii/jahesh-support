@@ -40,6 +40,40 @@ class TeamManagementTest extends TestCase
         $this->assertTrue($user->is_active);
     }
 
+    public function test_creating_member_accepts_role_ids_submitted_as_strings(): void
+    {
+        $role = Role::findByName('project-manager');
+
+        $this->actingAs($this->admin)->post('/team', [
+            'name' => 'مدیر آزمایشی',
+            'phone' => '09124445555',
+            'password' => 'secure-password',
+            'password_confirmation' => 'secure-password',
+            'role_ids' => [(string) $role->id],
+            'is_active' => '1',
+        ])->assertRedirect('/team')->assertSessionHasNoErrors();
+
+        $user = User::where('phone', '09124445555')->firstOrFail();
+        $this->assertTrue($user->hasRole('project-manager'));
+    }
+
+    public function test_updating_member_accepts_role_ids_submitted_as_strings(): void
+    {
+        $user = User::factory()->create(['phone' => '09125556666']);
+        $user->assignRole('team-member');
+        $role = Role::findByName('project-manager');
+
+        $this->actingAs($this->admin)->put("/team/{$user->id}", [
+            'name' => $user->name,
+            'phone' => $user->phone,
+            'role_ids' => [(string) $role->id],
+            'is_active' => '1',
+        ])->assertRedirect('/team')->assertSessionHasNoErrors();
+
+        $this->assertTrue($user->fresh()->hasRole('project-manager'));
+        $this->assertFalse($user->fresh()->hasRole('team-member'));
+    }
+
     public function test_duplicate_phone_is_rejected(): void
     {
         User::factory()->create(['phone' => '09123456789']);
